@@ -17,3 +17,22 @@ article{max-width:490px;background:#172833;border:1px solid #a3b4bf55;border-rad
 @media(max-width:550px){nav{width:calc(100% - 24px);display:grid;grid-template-columns:repeat(3,1fr)}nav button{padding:5px;min-width:0}#stick,#actions{bottom:max(118px,calc(env(safe-area-inset-bottom) + 108px))}header small{display:none}}
 
 [hidden]{display:none!important}
+
+#device-photo{--ratio:.48;position:fixed;z-index:1;right:max(170px,calc(env(safe-area-inset-right) + 154px));bottom:max(81px,calc(env(safe-area-inset-bottom) + 66px));margin:0;width:min(29vw,calc(49dvh * var(--ratio)));aspect-ratio:var(--ratio);overflow:hidden;border-radius:14px;background:#f9f9f9;box-shadow:0 7px 26px #0007;pointer-events:none;isolation:isolate}
+#device-photo[data-device=thermal]{--ratio:.53}
+#device-photo[data-device=radio]{--ratio:.61}
+#device-photo img{position:absolute;display:block;max-width:none;user-select:none;-webkit-user-drag:none}
+#device-photo[data-device=meter] img{width:152%;left:-26%;top:-4.3%}
+#device-photo[data-device=thermal] img{width:220%;left:-60%;top:-21.6%}
+#device-photo[data-device=radio] img{width:258%;left:-73.5%;top:-31%}
+.device-screen{position:absolute;overflow:hidden;background:#142127;color:#dcf4ed}
+[data-device=meter] .device-screen{left:27.9%;top:46.9%;width:44%;height:27%;border-radius:3px;container-type:inline-size}
+[data-device=thermal] .device-screen{left:22.2%;top:11.8%;width:56.4%;height:22.4%;border-radius:3px}
+.device-screen canvas{width:100%;height:100%;object-fit:fill}
+.meter-readings{height:100%;display:grid;align-content:center;padding:5%;font:700 12cqw/1.24 ui-monospace,monospace;white-space:pre;color:#c9f3ed}
+.meter-readings[data-alarm=true]{color:#fff4e4;background:#761f24;animation:meter-pulse .65s alternate infinite}
+@keyframes meter-pulse{to{background:#a02b22}}
+@media(prefers-reduced-motion:reduce){.meter-readings{animation:none!important}}
+#device-photo figcaption{position:absolute;bottom:0;left:0;right:0;background:#13212a;color:#ecf5ef;text-align:center;padding:4px 2px;font-size:clamp(8px,1.15vw,12px)}
+@media(max-width:550px){#device-photo{right:12px;bottom:max(258px,calc(env(safe-area-inset-bottom) + 248px));width:min(36vw,calc(43dvh * var(--ratio)))}}
+@media(max-height:550px) and (min-width:551px){#device-photo{bottom:67px;width:min(24vw,calc(61dvh * var(--ratio)))}}

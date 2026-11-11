@@ -25,7 +25,7 @@ Durch die Haustür und den Flur zur Kellertreppe. Im Keller den Technikraum öff
 | Gerät benutzen | F | Rechte Aktionsschaltfläche |
 | Ducken | C | Ducken |
 
-Das Strahlrohr bietet Voll- und Sprühstrahl sowie einen begrenzten Tank. Zum Nachfüllen am Vorplatz „Hände“ wählen und „Tank füllen“ antippen. Lampe, relative Wärmebildansicht und Messgerät unterstützen die Erkundung. Die Übung lässt sich mit ↻ zurücksetzen.
+Das Strahlrohr bietet Voll- und Sprühstrahl sowie einen begrenzten Tank. Zum Nachfüllen am Vorplatz „Hände“ wählen und „Tank füllen“ antippen. Die Geräteansichten verwenden die bereitgestellten Fotos des Dräger-Messgeräts, der K85 und des Sepura-Sprechmikrofons. Wärmebild und Gasmessung starten beim Auswählen. Das Messgerät zeigt simulierte O₂- und CO-Werte sowie einen Rauchindex. Bei einem Spielalarm blinkt das Display und gibt einen Doppelton aus, sofern Browser und Gerät Audio zulassen. Das Mikrofon zeigt den Sendestatus und quittiert die Bedienung akustisch. Die Übung lässt sich mit ↻ zurücksetzen.
 
 ## Modellgrenzen
 

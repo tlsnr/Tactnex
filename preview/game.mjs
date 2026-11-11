@@ -2,6 +2,8 @@ import * as T from './vendor/three.module.min.mjs';
 import {createWorld, floorAt, canStand, leafDistance, material, clamp} from './world.mjs';
 import {createFire, origin} from './fire.mjs';
 import {createSoftwareRenderer} from './software-renderer.mjs';
+import {createDevicePanel, createAlarm, meterValues} from './devices.mjs';
+import {createGlove} from './gloves.mjs';
 
 const ui=id=>document.getElementById(id);
 const scene=new T.Scene();
@@ -46,11 +48,23 @@ hand.position.set(.39,-.33,-.63);
 camera.add(hand);
 const grip=material(0x202b30);
 const alloy=material(0x9ca4a6,{metalness:.55});
-const caseMat=material(0x2e3e43);
-const display=new T.MeshBasicMaterial({color:0x85bba8});
+const devicesPanel=createDevicePanel();
+const alarm=createAlarm();
 const devices=['Hände','Strahlrohr','Wärmebild','Messgerät','Funkgerät','Lampe'];
 const models=devices.map(()=>new T.Group());
 for(const m of models) hand.add(m);
+const right=createGlove(models[0],1,false);
+right.glove.position.set(.02,-.16,-.11);
+right.glove.rotation.set(-.28,-.26,-.17);
+const left=createGlove(models[0],-1,false);
+left.glove.position.set(-.77,-.17,-.16);
+left.glove.rotation.set(-.29,.27,.18);
+const nozzleGrip=createGlove(models[1],1,true);
+nozzleGrip.glove.position.set(.053,-.10,.048);
+nozzleGrip.glove.rotation.set(.17,-.19,-.62);
+const lampGrip=createGlove(models[5],1,true);
+lampGrip.glove.position.set(.04,-.078,.06);
+lampGrip.glove.rotation.z=-.68;
 const box=(i,w,h,d,x,y,z,mat)=>world.box(w,h,d,x,y,z,mat,models[i]);
 box(1,.13,.15,.23,0,-.062,.07,grip);
 for(const [r1,r2,length,z,mat] of [[.052,.06,.37,-.13,alloy],[.081,.07,.105,-.32,grip],[.062,.062,.08,.035,grip]]){
@@ -58,12 +72,6 @@ for(const [r1,r2,length,z,mat] of [[.052,.06,.37,-.13,alloy],[.081,.07,.105,-.32
   part.rotation.x=Math.PI/2;
 }
 box(1,.16,.028,.15,0,.077,-.04,material(0xd84f2b));
-for(const i of [2,3,4]){
-  box(i,i===2?.24:.15,.19,.12,0,0,0,caseMat);
-  box(i,i===2?.19:.11,.083,.014,0,.031,.066,display);
-  box(i,.045,.026,.014,0,-.045,.067,alloy);
-}
-box(4,.027,.18,.027,.052,.168,0,grip);
 const lampBody=world.mesh(new T.CylinderGeometry(.06,.045,.24,16),alloy,0,0,0,models[5]);
 lampBody.rotation.x=Math.PI/2;
 const lamp=new T.SpotLight(0xffeed8,0,15,.37,.62,1.35);
@@ -73,16 +81,11 @@ camera.add(lamp,lamp.target);
 const smokeScreen=document.createElement('div');
 smokeScreen.style.cssText='position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse,#645f56,#292826);opacity:0';
 document.body.append(smokeScreen);
-const thermalCanvas=document.createElement('canvas');
-thermalCanvas.width=256;thermalCanvas.height=144;
-thermalCanvas.style.cssText='position:fixed;width:min(52vw,340px);height:auto;top:50%;left:50%;transform:translate(-50%,-50%);border:5px solid #283638;border-radius:9px;pointer-events:none';
-thermalCanvas.hidden=true;
-document.body.append(thermalCanvas);
-const thermalContext=thermalCanvas.getContext('2d');
+const thermalContext=devicesPanel.thermal.getContext('2d');
 const thermalRay=new T.Raycaster(), heatProjection=new T.Vector3(), thermalDirection=new T.Vector3();
 function drawThermal(){
-  const ctx=thermalContext,w=256,h=144;
-  ctx.fillStyle='#17172e';
+  const ctx=thermalContext,w=256,h=192;
+  ctx.fillStyle='#1a1d1e';
   ctx.fillRect(0,0,w,h);
   // Each sample maps a visible surface to a relative temperature palette.
   for(let j=0;j<14;j++){
@@ -90,8 +93,9 @@ function drawThermal(){
       thermalRay.setFromCamera({x:(i+.5)/12-1,y:1-(j+.5)/7},camera);
       thermalRay.far=15;
       const point=thermalRay.intersectObjects(world.surfaces,false)[0]?.point;
-      const value=point ? Math.max(.12,state.heat*Math.exp(-point.distanceTo(origin)*.86)) : .04;
-      ctx.fillStyle='hsl('+Math.round(260+130*value)+' 68% '+Math.round(12+64*value)+'%)';
+      const warmth=point?state.heat*Math.exp(-point.distanceTo(origin)*.92):0;
+      const gray=point?Math.round(38+119*Math.exp(-point.distanceTo(camera.position)*.18)):24;
+      ctx.fillStyle=warmth>.16?'hsl('+Math.round(61-68*warmth)+' 92% '+Math.round(37+30*warmth)+'%)':`rgb(${gray},${gray},${gray})`;
       ctx.fillRect(i*w/24,j*h/14,Math.ceil(w/24),Math.ceil(h/14));
     }
   }
@@ -109,11 +113,11 @@ function drawThermal(){
   }
   ctx.strokeStyle='#fff9';
   ctx.beginPath();ctx.moveTo(w/2-5,h/2);ctx.lineTo(w/2+5,h/2);ctx.moveTo(w/2,h/2-5);ctx.lineTo(w/2,h/2+5);ctx.stroke();
-  ctx.fillStyle='#efe6d6';ctx.font='10px system-ui';ctx.fillText('WÄRMEBILD · RELATIV',8,15);
+  ctx.fillStyle='#efe6d6';ctx.font='10px system-ui';ctx.fillText('SIM · RELATIV',8,15);
 }
 
 let running=false, selected=0, thermal=false, measuring=false, flashlight=false;
-let yaw=0,pitch=0,feet=0,eye=1.65,crouched=false,notification='',until=0;
+let yaw=0,pitch=0,feet=0,eye=1.65,crouched=false,notification='',until=0,radioUntil=0;
 const keys=new Set();
 const move={x:0,y:0};
 function say(message){
@@ -129,9 +133,13 @@ function toggleCrouch(){
 function equip(i){
   selected=i;
   state.flow=false;
-  thermal=false;
-  measuring=false;
-  thermalCanvas.hidden=true;
+  thermal=i===2;
+  measuring=i===3;
+  alarm.update(false);
+  radioUntil=0;
+  devicesPanel.show(({2:"thermal",3:"meter",4:"radio"})[i]);
+  if(thermal){devicesPanel.setThermal(true);thermalAt=0;}
+  if(measuring) alarm.unlock();
   for(const [n,model] of models.entries()) model.visible=n===i;
   for(const [n,button] of [...ui('equipment').children].entries()) button.setAttribute('aria-pressed',String(n===i));
 }
@@ -182,15 +190,20 @@ function interact(){
 }
 function use(){
   if(!running) return;
+  alarm.unlock();
   if(selected===1){
     if(state.tank<=0){say('Tank leer. Am Vorplatz nachfüllen.');return;}
     state.flow=!state.flow;
   } else if(selected===2){
     thermal=!thermal;
-    thermalCanvas.hidden=!thermal;
+    devicesPanel.setThermal(thermal);
   } else if(selected===3){
     measuring=!measuring;
+    if(!measuring){devicesPanel.updateMeter(null);alarm.update(false);}
   } else if(selected===4){
+    radioUntil=performance.now()+850;
+    devicesPanel.setRadio(true);
+    alarm.radio();
     if(state.heat===0 && camera.position.z>1.3 && Math.abs(camera.position.x)<7){
       state.reported=true;
       say('Leitstelle bestätigt. Einsatz abgeschlossen.');
@@ -270,7 +283,7 @@ for(const type of ['pointerup','pointercancel','lostpointercapture']){
 }
 addEventListener('blur',releaseInput);
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){releaseInput();state.flow=false;}
+  if(document.hidden){releaseInput();state.flow=false;alarm.update(false);}
 });
 addEventListener('keydown',e=>{
   if(!running || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -313,10 +326,12 @@ function updateHud(now){
   let gauges='';
   if(selected===1) gauges='Wasser '+Math.ceil(state.tank)+' / 420 L';
   if(measuring){
-    const smoke=index<0?0:state.smoke[index];
-    const temp=19+(index===0?state.heat*150:smoke*26);
-    gauges='Modellwerte · '+Math.round(temp)+' °C · Rauchindex '+Math.round(smoke*100)+' / 100';
+    const values=meterValues(index<0?0:state.smoke[index],index===0?state.heat:0);
+    devicesPanel.updateMeter(values);
+    alarm.update(values.alarm&&!document.hidden);
+    gauges=values.alarm?'Gaswarnung · Modellwerte':'Gasmesstechnik · Modellwerte';
   }
+  if(radioUntil && now>=radioUntil){devicesPanel.setRadio(false);radioUntil=0;}
   ui('gauges').textContent=gauges;
   const door=nearestDoor();
   ui('interact').textContent=door?door.label+(door.open?' schließen':' öffnen'):'Tür';
@@ -340,6 +355,11 @@ function frame(now){
   previous=now;
   if(running){
     movePlayer(dt);
+    const sway=Math.sin(now*.004)*.016;
+    hand.position.y=-.33+sway;
+    right.pose(Math.max(0,sway)*3);
+    left.pose(Math.max(0,-sway)*3);
+    nozzleGrip.pose(state.flow ? .18 : 0);
     for(const door of world.doors){
       const angle=door.hinge.rotation.y;
       const direction=door.angle===0?1:door.x<0?1:-1;
@@ -366,5 +386,5 @@ reset();
 updateHud(performance.now());
 ui('start').disabled=false;
 ui('start').textContent='Einsatz beginnen';
-ui('start').onclick=()=>{ui('briefing').close();running=true;};
+ui('start').onclick=()=>{alarm.unlock();ui('briefing').close();running=true;};
 requestAnimationFrame(frame);
