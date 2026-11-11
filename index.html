@@ -9,7 +9,18 @@ box(80,.15,80,0,-.12,0,0x547348);box(5,.05,18,0,.01,5,0xaaaaa3);
 // House front wall with a real doorway gap: doorway x=-.8..+.8, house spans x=-5..5.
 box(4.2,3.4,.25,-2.9,1.7,0,0xe8dfcd);box(4.2,3.4,.25,2.9,1.7,0,0xe8dfcd);box(1.6,.85,.25,0,2.975,0,0xe8dfcd);
 box(.25,3.4,9,-5,1.7,-4.5,0xe8dfcd);box(.25,3.4,9,5,1.7,-4.5,0xe8dfcd);box(10,3.4,.25,0,1.7,-9,0xe8dfcd);box(4,.15,9,-3,.01,-4.5,0xb4a797);box(4,.15,9,3,.01,-4.5,0xb4a797);box(2,.15,5.3,0,.01,-2.65,0xb4a797);
-box(10,.3,9,0,3.55,-4.5,0x5e5754);
+// Pitched tiled roof with gables, ridge, chimney and gutters.
+function roofSlope(x,angle){const m=box(5.95,.22,10.1,x,4.45,-4.5,0x844638);m.rotation.z=angle;return m}
+roofSlope(-2.45,-.48);roofSlope(2.45,.48);
+for(const z of [-9.45,.45]){const g=new THREE.Mesh(new THREE.ConeGeometry(5.5,2.55,3),new THREE.MeshStandardMaterial({color:0xe4d7c4,roughness:1}));g.rotation.y=Math.PI/2;g.position.set(0,4.63,z);scene.add(g)}
+box(.7,1.4,.7,2.5,5.55,-6.8,0x9b5b4b);box(.9,.13,.9,2.5,6.3,-6.8,0x555052);
+for(const x of [-4.9,4.9])box(.13,.13,10.2,x,3.48,-4.5,0x626a6e);
+for(let j=0;j<9;j++)for(const x of [-2.4,2.4]){const tile=box(5.6,.025,.035,x,4.49,-9+j*1.05,0x603b32);tile.rotation.z=x<0?-.48:.48}
+// Window frames, panes, shutters and sills.
+for(const x of [-3.2,3.2]){box(1.95,.12,.34,x,.98,.21,0xe2e2df);for(const dx of [-1.04,1.04])box(.1,1.75,.15,x+dx,1.8,.2,0xf0f0ec);box(1.98,.1,.15,x,2.65,.2,0xf0f0ec)}
+// Porch light and entry threshold.
+box(1.9,.12,.65,0,.06,.43,0x99978f);const porchLamp=new THREE.PointLight(0xffdfab,1.4,6);porchLamp.position.set(0,2.85,.7);scene.add(porchLamp);
+
 for(const x of [-3.2,3.2]){box(1.6,1.5,.05,x,1.8,.15,0x536c77);box(.08,1.6,.1,x,1.8,.2,0xffffff);box(1.6,.08,.1,x,1.8,.2,0xffffff)}
 const hinge=new THREE.Group();hinge.position.set(-.8,0,.02);scene.add(hinge);const door=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.12,.1),new THREE.MeshStandardMaterial({color:0x805a3c}));door.position.set(.8,1.06,0);hinge.add(door);const handle=new THREE.Mesh(new THREE.SphereGeometry(.065,12,12),new THREE.MeshStandardMaterial({color:0xd4bc79}));handle.position.set(1.42,1.06,.08);hinge.add(handle);
 // Interior hall, stairs represented by a visible descent at the back.
@@ -25,6 +36,25 @@ box(9,2.7,.2,0,-1.35,-17,0xc9c2b7);
 // Staircase goes from z=-5.4 at ground level to z=-10.4 at basement level.
 const stairStart=-5.4,stairEnd=-10.4,stairCount=14;
 for(let i=0;i<stairCount;i++){const z=stairStart-(i+.5)*(5/stairCount);const y=-(i+1)*2.7/stairCount;box(1.9,.12,5/stairCount,0,y-.07,z,0x77716b)}
+// Basement furnishing and props.
+function furnishing(w,h,d,x,y,z,color){return box(w,h,d,x,y,z,color)}
+furnishing(1.6,.8,.8,-3.2,-2.28,-15.6,0x65513f);furnishing(1.45,.07,.9,-3.2,-1.84,-15.6,0x8d7459);
+for(const x of [-3.9,-2.5])for(const z of [-16.0,-15.25])furnishing(.09,.85,.09,x,-2.28,z,0x4a4036);
+furnishing(1.5,1.8,.5,3.3,-1.8,-16.4,0x697077);
+for(let y=-2.25;y<-.5;y+=.55)furnishing(1.45,.06,.55,3.3,y,-16.4,0x4e565a);
+for(const [x,z] of [[2.9,-15.9],[3.6,-15.9],[3,-13.2]])furnishing(.55,.55,.55,x,-2.4,z,0x8d7151);
+const basementLamp=new THREE.PointLight(0xffe4bd,1.1,7);basementLamp.position.set(2,-.45,-12.4);scene.add(basementLamp);
+// Living area furniture, hall rug, kitchen and room partitions.
+furnishing(1.7,.035,3.3,0,.11,-2.6,0x715f50);
+furnishing(.16,2.8,4.0,-1.9,1.4,-6.9,0xd9d0c2);
+furnishing(2.3,.7,.85,-3.4,.42,-3.2,0x516779);
+furnishing(1.9,.18,.9,-3.4,.86,-3.2,0x687f90);
+for(const x of [-4.05,-2.75])furnishing(.65,.22,.4,x,.88,-3.2,0x8ca0a9);
+furnishing(1.35,.42,.8,-3.4,.23,-4.7,0x795a45);
+furnishing(2.9,.85,.65,3.25,.44,-7.65,0xc8c2b5);
+furnishing(2.9,.06,.8,3.25,.89,-7.65,0x55575a);
+for(const x of [2.4,3.4,4.3])furnishing(.48,.65,.6,x,.35,-8.2,0xc0b8a9);
+const interiorLight=new THREE.PointLight(0xffe5c1,1.8,12);interiorLight.position.set(0,2.8,-3.5);scene.add(interiorLight);
 // Low wall dividing the basement into two simple rooms.
 box(3,.2,.18,-2.8,-1.25,-13.2,0xbbb3a8);
 
@@ -50,8 +80,18 @@ else if(name==='Strahlrohr'){const m=add(new THREE.CylinderGeometry(.065,.11,.65
 else if(name==='Feuerwehraxt'){const m=add(new THREE.CylinderGeometry(.025,.035,.85,8),0,.14,-.2,0x6c482b);m.rotation.z=-.2;add(new THREE.BoxGeometry(.35,.2,.065),-.04,.55,-.2,0x9ba5a9)}
 else if(name==='Halligan'){const m=add(new THREE.CylinderGeometry(.025,.025,.85,8),0,.15,-.2,0x666e76);m.rotation.z=.2;add(new THREE.BoxGeometry(.28,.07,.07),-.1,.55,-.2,0x8b9299)}
 else if(name==='Funkgerät'){add(new THREE.BoxGeometry(.19,.3,.09),0,.1,-.2,0x22272b);add(new THREE.CylinderGeometry(.012,.012,.2,8),.06,.35,-.2,0x171a1b)}}
+let selectedEquipment='Hände',fireStrength=1,waterOn=false,waterDroplets=[],thermalMode=false;
+const equipmentDisplay=document.createElement('div');equipmentDisplay.style.cssText='position:absolute;right:14px;top:68px;z-index:21;background:#10222bdc;border:1px solid #63838e;border-radius:9px;padding:9px 12px;font-size:13px;display:none;pointer-events:none';document.body.append(equipmentDisplay);
+const useButton=document.createElement('button');useButton.textContent='GERÄT BENUTZEN';useButton.style.cssText='position:absolute;right:22px;bottom:188px;z-index:25;background:#f3bb4d;color:#1c1c1c;border:0;border-radius:12px;padding:14px;font-weight:800;display:none';document.body.append(useButton);
+const thermalOverlay=document.createElement('div');thermalOverlay.style.cssText='position:absolute;left:22%;top:17%;width:56%;height:56%;border:8px solid #1c2528;border-radius:22px;z-index:19;pointer-events:none;display:none;box-sizing:border-box;background:radial-gradient(circle at 43% 58%,#fff8a5 0%,#ff672b 12%,#6e348d 35%,#192e62 70%);opacity:.78';document.body.append(thermalOverlay);
+const thermalLabel=document.createElement('div');thermalLabel.style.cssText='position:absolute;left:12px;top:10px;color:white;background:#141c23a8;padding:5px 9px;font:700 13px system-ui';thermalLabel.textContent='WÄRMEBILD · DEMOMODUS · KEINE ECHTE TEMPERATURMESSUNG';thermalOverlay.append(thermalLabel);
+function useEquipment(){if(selectedEquipment==='Strahlrohr'){waterOn=!waterOn;useButton.textContent=waterOn?'WASSER STOPPEN':'WASSER ABGEBEN';status.textContent=waterOn?'Wasserabgabe aktiv. Auf den Brandherd zielen.':'Wasserabgabe beendet.'}else if(selectedEquipment==='Wärmebildkamera'){thermalMode=!thermalMode;thermalOverlay.style.display=thermalMode?'block':'none';status.textContent=thermalMode?'Wärmebild-Demodarstellung eingeschaltet.':'Wärmebild ausgeschaltet.'}else if(selectedEquipment==='Messgerät'){status.textContent='Messgerät: Demoanzeige, keine reale Gaskonzentration.'}else if(selectedEquipment==='Funkgerät'){status.textContent='Funk: Übungskanal – keine Netzwerkverbindung.'}else status.textContent='Werkzeug ausgewählt – Interaktion noch in Entwicklung.'}
+useButton.addEventListener('click',useEquipment);
+document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f')useEquipment()});
+const waterMaterial=new THREE.MeshBasicMaterial({color:0x9bdcf4,transparent:true,opacity:.75});
+for(let i=0;i<35;i++){const drop=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),waterMaterial);drop.visible=false;scene.add(drop);waterDroplets.push(drop)}
 const equipUI=document.createElement('div');equipUI.style.cssText='position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:25;display:flex;gap:5px;max-width:60vw;overflow-x:auto;padding:5px;background:#101923b8;border-radius:12px';document.body.append(equipUI);
-for(const name of ['Hände','Strahlrohr','Wärmebildkamera','Messgerät','Feuerwehraxt','Halligan','Funkgerät']){const b=document.createElement('button');b.textContent=name;b.style.cssText='white-space:nowrap;border:1px solid #ffffff88;border-radius:8px;background:#344553;color:white;padding:10px;font-size:12px';b.onclick=()=>{equipment(name);for(const x of equipUI.children)x.style.background='#344553';b.style.background='#aa7829';status.textContent=name+' ausgewählt (3D-Testmodell).'};equipUI.append(b)}
+for(const name of ['Hände','Strahlrohr','Wärmebildkamera','Messgerät','Feuerwehraxt','Halligan','Funkgerät']){const b=document.createElement('button');b.textContent=name;b.style.cssText='white-space:nowrap;border:1px solid #ffffff88;border-radius:8px;background:#344553;color:white;padding:10px;font-size:12px';b.onclick=()=>{selectedEquipment=name;waterOn=false;thermalMode=false;thermalOverlay.style.display='none';useButton.style.display=name==='Hände'?'none':'block';useButton.textContent=name==='Strahlrohr'?'WASSER ABGEBEN':name==='Wärmebildkamera'?'WÄRMEBILD EIN':'GERÄT BENUTZEN';equipmentDisplay.style.display=name==='Messgerät'?'block':'none';equipmentDisplay.textContent='O₂ 20,9 % · CO -- · H₂S -- · DEMO';equipment(name);for(const x of equipUI.children)x.style.background='#344553';b.style.background='#aa7829';status.textContent=name+' ausgewählt (3D-Testmodell).'};equipUI.append(b)}
 equipment('Hände');
 const keys=new Set(),status=document.querySelector('#status'),action=document.querySelector('#interact');let open=false,doorAngle=0;
 function interact(){if(Math.abs(camera.position.x)<2.1&&Math.abs(camera.position.z)<2.7){open=!open;status.textContent=open?'Haustür öffnet sich.':'Haustür schließt sich.'}}
@@ -84,6 +124,6 @@ for(let i=1;i<=steps;i++){const tx=px+(nx-px)*i/steps,tz=pz+(nz-pz)*i/steps;if(p
 camera.position.x=cx;camera.position.z=cz;
 const inHouse=cx>-4.7&&cx<4.7&&cz<-.3&&cz>-16.7;
 const stairProgress=Math.max(0,Math.min(1,(-cz-5.4)/5));camera.position.y=1.65-2.7*stairProgress;
-const near=Math.abs(camera.position.x)<2&&Math.abs(camera.position.z)<2.6;action.style.display=near?'block':'none';action.textContent=open?'Tür schließen':'Tür öffnen';if(inHouse&&camera.position.z< -10.4)status.textContent='Im Kellergeschoss (Testbereich).';else if(inHouse&&camera.position.z< -5.4)status.textContent='Du gehst die Kellertreppe hinunter.';else if(inHouse)status.textContent='Im Hausflur. Gehe zur Kellertreppe.';for(let i=0;i<smoke.length;i++){const a=t*.00025+i*2.4;smoke[i].position.set(-2+Math.sin(a+i)*.5,-2.15+((t*.0003+i*.17)%3),-14.4+Math.cos(a+i)*.4);smoke[i].scale.setScalar(.7+((t*.0003+i*.17)%3)*.55)}fireLight.intensity=3.2+Math.sin(t*.013)*.9;for(let i=0;i<fireGroup.children.length;i++)fireGroup.children[i].scale.y=.8+Math.sin(t*.009+i)*.2;renderer.render(scene,camera);requestAnimationFrame(tick)}requestAnimationFrame(tick);
+const near=Math.abs(camera.position.x)<2&&Math.abs(camera.position.z)<2.6;action.style.display=near?'block':'none';action.textContent=open?'Tür schließen':'Tür öffnen';if(inHouse&&camera.position.z< -10.4)status.textContent='Im Kellergeschoss (Testbereich).';else if(inHouse&&camera.position.z< -5.4)status.textContent='Du gehst die Kellertreppe hinunter.';else if(inHouse)status.textContent='Im Hausflur. Gehe zur Kellertreppe.';for(let i=0;i<smoke.length;i++){const a=t*.00025+i*2.4;smoke[i].position.set(-2+Math.sin(a+i)*.5,-2.15+((t*.0003+i*.17)%3),-14.4+Math.cos(a+i)*.4);smoke[i].scale.setScalar((.7+((t*.0003+i*.17)%3)*.55)*Math.max(.1,fireStrength));smoke[i].visible=fireStrength>.05}fireLight.intensity=fireStrength*(3.2+Math.sin(t*.013)*.9);fireGroup.scale.setScalar(Math.max(.05,fireStrength));if(waterOn&&selectedEquipment==='Strahlrohr'){const forward=new THREE.Vector3();camera.getWorldDirection(forward);const origin=camera.position.clone().addScaledVector(forward,.6);const target=new THREE.Vector3(-2,-1.8,-14.4);if(forward.dot(target.clone().sub(camera.position).normalize())>.89&&camera.position.distanceTo(target)<10){fireStrength=Math.max(0,fireStrength-dt*.15);if(fireStrength<.06)status.textContent='Brandherd im Übungsszenario gelöscht.'}for(let i=0;i<waterDroplets.length;i++){const p=waterDroplets[i];const dist=.6+((t*.005+i*.17)%7);p.position.copy(origin).addScaledVector(forward,dist);p.position.y-=dist*dist*.012;p.position.x+=Math.sin(i*15.4)*dist*.018;p.visible=true}}else for(const p of waterDroplets)p.visible=false;for(let i=0;i<fireGroup.children.length;i++)fireGroup.children[i].scale.y=.8+Math.sin(t*.009+i)*.2;renderer.render(scene,camera);requestAnimationFrame(tick)}requestAnimationFrame(tick);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script></body></html>
