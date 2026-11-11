@@ -6,8 +6,8 @@
 import * as THREE from 'https://esm.sh/three@0.170.0';
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9db3c4);scene.fog=new THREE.FogExp2(0x9db3c4,.012);
 const camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.07,130);camera.position.set(0,1.65,12);camera.rotation.order='YXZ';
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.4));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.prepend(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xe5f4ff,0x4c544d,2));const sun=new THREE.DirectionalLight(0xfff1d6,2.2);sun.position.set(12,20,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe5f4ff,0x4c544d,2));const sun=new THREE.DirectionalLight(0xfff1d6,2.2);sun.position.set(12,20,8);sun.castShadow=true;sun.shadow.mapSize.set(768,768);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
 const mat=(c,roughness=.85)=>new THREE.MeshStandardMaterial({color:c,roughness});
 const walls=mat(0xd4cbbd),floorMat=mat(0x8f7963),basementMat=mat(0x747577),roofMat=mat(0x774335),glass=new THREE.MeshPhysicalMaterial({color:0x78a8bb,metalness:.1,roughness:.14,transparent:true,opacity:.7,side:THREE.DoubleSide});
 function obj(geo,m,x,y,z,parent=scene){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
@@ -15,7 +15,7 @@ function cube(w,h,d,x,y,z,m,parent){return obj(new THREE.BoxGeometry(w,h,d),m,x,
 function plane(w,d,x,y,z,m){const o=obj(new THREE.PlaneGeometry(w,d),m,x,y,z);o.rotation.x=-Math.PI/2;return o}
 const ground=plane(120,120,0,-.12,0,mat(0x55754b));plane(120,7,0,-.10,21,mat(0x555b5c));plane(2.6,12,0,-.08,7,mat(0xada69a));plane(4.3,19,8,-.08,9,mat(0x8e918e));
 for(let x=-54;x<55;x+=8)cube(3,.015,.1,x,-.075,21,mat(0xded9bc));
-const colliders=[];function solid(w,h,d,x,y,z,m){const a=cube(w,h,d,x,y,z,m);colliders.push({x,z,w,d,y,h});return a}
+const colliders=[];function solid(w,h,d,x,y,z,m){const a=cube(w,h,d,x,y,z,m);colliders.push({x,z,w,d,y,h,mesh:a});return a}
 function tree(x,z,s){const bark=mat(0x5c4534),leaf=mat(0x3a6738);obj(new THREE.CylinderGeometry(.12*s,.26*s,3*s,9),bark,x,1.45*s,z);for(let i=0;i<6;i++){const a=i*2.4;obj(new THREE.IcosahedronGeometry((.85+(i%3)*.13)*s,1),leaf,x+Math.cos(a)*.65*s,(3.1+(i%3)*.38)*s,z+Math.sin(a)*.65*s)}}
 for(const [x,z,s] of [[-12,9,1.1],[13,9,1],[-12,-8,.9],[13,-9,1.1],[-19,17,1.2]])tree(x,z,s);
 for(let z=-12;z<17;z+=1.3)for(const x of [-8.3,10])obj(new THREE.IcosahedronGeometry(.55,1),mat(0x426a37),x,.36,z);
@@ -73,7 +73,7 @@ function blocked(x,z,y){const r=.25;if(z< -17.7||Math.abs(x)>48)return true;for(
 if(Math.abs(z)<.23+r&&Math.abs(x)<.85+r){if(!doorOpen||Math.abs(doorAngle)<1.15)return true}
 const ax=-.85,az=.04,bx=ax+1.7*Math.cos(doorAngle),bz=az-1.7*Math.sin(doorAngle);const vx=bx-ax,vz=bz-az;const t=Math.max(0,Math.min(1,((x-ax)*vx+(z-az)*vz)/(vx*vx+vz*vz)));if(Math.hypot(x-(ax+t*vx),z-(az+t*vz))<r+.07)return true;
 if(z< -5.25&&z> -10.25&&Math.abs(x)>1)return true;return false}
-let last=performance.now();function frame(now){const dt=Math.min(.045,(now-last)/1000);last=now;camera.rotation.y=yaw;camera.rotation.x=pitch;
+let last=performance.now();let fpsTimer=0,fpsFrames=0;function frame(now){const dt=Math.min(.045,(now-last)/1000);last=now;fpsTimer+=dt;fpsFrames++;if(fpsTimer>2){document.querySelector('#message').textContent='Training · '+Math.round(fpsFrames/fpsTimer)+' FPS';fpsTimer=0;fpsFrames=0}camera.rotation.y=yaw;camera.rotation.x=pitch;
 const target=doorOpen?-1.58:0;doorAngle+=(target-doorAngle)*Math.min(1,dt*7);hinge.rotation.y=doorAngle;
 const f=Number(pressed.has('f')||pressed.has('arrowup'))-Number(pressed.has('b')||pressed.has('arrowdown'));const s=Number(pressed.has('r'))-Number(pressed.has('l'));const norm=Math.max(1,Math.hypot(f,s));const speed=3.1*dt/norm;
 const dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed;
@@ -90,7 +90,7 @@ for(let i=0;i<flames.length;i++)flames[i].scale.y=.85+Math.sin(now*.012+i*3)*.2;
 for(let i=0;i<smoke.length;i++){const age=(now*.000065+i/smoke.length)%1,a=i*2.3999,r=.2+age*2.1;smoke[i].position.set(-2.5+Math.cos(a)*r,Math.min(-.35,-2.15+age*2.7),-15.5+Math.sin(a)*r);smoke[i].scale.setScalar(.45+age*2);smoke[i].material.opacity=smokeAmount*.25*(1-age*.7);smoke[i].visible=smokeAmount>.01}
 if(waterOn&&selected==='Strahlrohr'){const dir=new THREE.Vector3();camera.getWorldDirection(dir);const source=camera.position.clone().addScaledVector(dir,.5);const fireTarget=new THREE.Vector3(-2.5,-1.85,-15.5);const toFire=fireTarget.clone().sub(camera.position),distance=toFire.length(),aimed=dir.dot(toFire.clone().normalize())>.965&&distance<9&&camera.position.y<0;
 // A water stream can only affect the fire when the nozzle has line of sight.
-const ray=new THREE.Raycaster(camera.position,dir,.1,Math.max(.1,distance-.6));const blockers=ray.intersectObjects(scene.children.filter(o=>o.isMesh&&o!==ground&&!smoke.includes(o)&&!water.includes(o)&&!flames.includes(o)),true);
+const ray=new THREE.Raycaster(camera.position,dir,.1,Math.max(.1,distance-.6));const blockers=ray.intersectObjects(colliders.map(w=>w.mesh).filter(Boolean),false);
 const clear=blockers.length===0||blockers[0].distance>=distance-.7;
 if(aimed&&clear){waterHits+=dt;strength=Math.max(0,strength-dt*.19);if(strength===0)status.textContent='Brandherd gelöscht (Trainingsmodell)'}for(let i=0;i<water.length;i++){const d=.5+((now*.004+i*.14)%7),p=water[i];p.position.copy(source).addScaledVector(dir,d);p.position.y-=d*d*.014;p.position.x+=Math.sin(i*2.4)*d*.016;p.visible=true}}else for(const p of water)p.visible=false;
 renderer.render(scene,camera);requestAnimationFrame(frame)}
