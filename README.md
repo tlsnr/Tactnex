@@ -14,7 +14,7 @@ python3 -m http.server 8000
 
 ## Spielen
 
-Durch die Haustür und den Flur zur Kellertreppe. Im Keller den Technikraum öffnen und den Brandherd mit dem Strahlrohr treffen. Sobald der Brand aus ist, zurück zum Vorplatz und über das Funkgerät melden.
+Durch die Haustür und den Flur zur Kellertreppe. Im Keller den Technikraum öffnen und den Brandherd mit dem Strahlrohr treffen. Sobald der Brand aus ist, zurück zum Verteiler und über das Funkgerät melden.
 
 | Aktion | Desktop | iPad |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Durch die Haustür und den Flur zur Kellertreppe. Im Keller den Technikraum öff
 | Gerät benutzen | F | Rechte Aktionsschaltfläche |
 | Ducken | C | Ducken |
 
-Das Strahlrohr bietet Voll- und Sprühstrahl sowie einen begrenzten Tank. Zum Nachfüllen am Vorplatz „Hände“ wählen und „Tank füllen“ antippen. Die Geräteansichten verwenden die bereitgestellten Fotos des Dräger-Messgeräts, der K85 und des Sepura-Sprechmikrofons. Wärmebild und Gasmessung starten beim Auswählen in einem großen Gerätefenster. Beim Wechsel zu Händen, Strahlrohr oder Lampe bleibt es geöffnet. Ein anderes Anzeigegerät wechselt den Fensterinhalt. Mit × oder Escape lässt sich das Fenster schließen. Das Messgerät zeigt simulierte O₂- und CO-Werte sowie einen Rauchindex. Bei einem Spielalarm blinkt das Display und gibt einen Doppelton aus, sofern Browser und Gerät Audio zulassen. Das Mikrofon zeigt den Sendestatus und quittiert die Bedienung akustisch. Die Übung lässt sich mit ↻ zurücksetzen.
+Das Strahlrohr bietet Voll- und Sprühstrahl. Der Löschwasservorrat liegt im Fahrzeug. Die vorbereitete Leitung führt vom Fahrzeug über den Verteiler bis zum Technikraum. Zum Freigeben der Leitung nach der Truppkontrolle „Angriffsabgang öffnen“ wählen. Die Geräteansichten verwenden die bereitgestellten Fotos des Dräger-Messgeräts, der K85 und des Sepura-Sprechmikrofons. Wärmebild und Gasmessung starten beim Auswählen in einem großen Gerätefenster. Beim Wechsel zu Händen, Strahlrohr oder Lampe bleibt es geöffnet. Ein anderes Anzeigegerät wechselt den Fensterinhalt. Mit × oder Escape lässt sich das Fenster schließen. Das Messgerät zeigt simulierte O₂- und CO-Werte sowie einen Rauchindex. Bei einem Spielalarm blinkt das Display und gibt einen Doppelton aus, sofern Browser und Gerät Audio zulassen. Das Mikrofon zeigt den Sendestatus und quittiert die Bedienung akustisch. Die Übung lässt sich mit ↻ zurücksetzen.
 
 ## Modellgrenzen
 
@@ -33,4 +33,4 @@ Das Szenario enthält ein Erdgeschoss und einen Keller, ein Fahrzeug als Kulisse
 
 ## Atemschutzübung
 
-Die Vorschau bildet ausgewählte Schritte aus [FwDV 7, Abschnitte 7.1, 7.2 und 7.4](https://www.lfs-bw.de/fileadmin/LFS-BW/themen/gesetze_vorschriften/fwdv/dokumente/FwDV_7.pdf) ab. Über „Hände“ beginnt die simulierte Truppkontrolle, danach folgen die Funkmeldungen an die Atemschutzüberwachung. Truppmann und Sicherheitstrupp sind in dieser Fassung als Spielzustand abgebildet. Der niedrigere der beiden Behälterdrücke ist für die simulierte Rückwegreserve maßgeblich. Nach Erreichen der Reserve endet die Brandbekämpfung, und der Rückweg wird gemeldet. Die Druckverläufe und Übungszeiten sind Spielparameter. Schlauchleitung, Rückwegsicherung und Atemschutznotfälle werden noch nicht simuliert.
+Die Vorschau bildet ausgewählte Schritte aus [FwDV 7, Abschnitte 7.1, 7.2 und 7.4](https://www.lfs-bw.de/fileadmin/LFS-BW/themen/gesetze_vorschriften/fwdv/dokumente/FwDV_7.pdf) ab. Über „Hände“ beginnt die simulierte Truppkontrolle, danach folgen die Funkmeldungen an die Atemschutzüberwachung. Truppmann und Sicherheitstrupp sind in dieser Fassung als Spielzustand abgebildet. Der niedrigere der beiden Behälterdrücke ist für die simulierte Rückwegreserve maßgeblich. Nach Erreichen der Reserve endet die Brandbekämpfung, und der Rückweg wird gemeldet. Die Druckverläufe und Übungszeiten sind Spielparameter. Die vorbereitete Schlauchleitung ist als Orientierung sichtbar. Auslegen, Nachführen und Verfangen der Leitung sowie Atemschutznotfälle werden noch nicht simuliert.

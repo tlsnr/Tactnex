@@ -88,10 +88,32 @@ export function createWorld(scene) {
   // Exterior terrain surrounds the cellar footprint and leaves the stairs clear.
   const grass = texture('#58734a','grass');
   for (const [w,d,x,z] of [[96,37,0,18.5],[96,32,0,-28],[42.5,12,-26.75,-6],[42.5,12,26.75,-6]]) {
-    box(w,.18,d,x,-.12,z,grass);
+    box(w,.18,d,x,-.12,z,grass).renderOrder=-3;
   }
-  floor(3,11,0,-.025,5.5,concrete);
-  box(96,.055,6,0,-.055,15,dark);
+  const pavers=[material(0xa4a098),material(0x97958d),material(0xb4afa4),material(0xaaa79e)];
+  for(let row=0;row<22;row++){
+    for(let col=0;col<6;col++){
+      box(.488,.045,.488,(col-2.5)*.5,-.033,(row+.5)*.5,pavers[(row*7+col*5+row*col)%4]).renderOrder=-2;
+    }
+  }
+  for(const side of [-1,1]) box(.1,.07,11,side*1.54,-.018,5.5,concrete).renderOrder=-2;
+  box(96,.055,6,0,-.055,15,dark).renderOrder=-2;
+  box(96,.09,1.18,0,-.024,11.65,concrete).renderOrder=-2;
+  box(3.7,.03,9.7,6.55,-.024,6.35,pavers[1]).renderOrder=-2;
+  for(const x of [-3.12,3.12]){
+    box(2.46,.21,.74,x,.085,.69,brick);
+    box(2.52,.056,.79,x,.19,.69,wood);
+    for(let i=0;i<7;i++){
+      const shrub=mesh(new T.IcosahedronGeometry(.26+(i%2)*.04,1),material(i%2?0x4a6741:0x617942),x+(i-3)*.33,.29,.69);
+      shrub.scale.y=.77;
+    }
+  }
+  const canopyRoof=box(2.07,.14,.94,0,2.39,.36,trim);
+  canopyRoof.rotation.x=.10;
+  for(const x of [-.91,.91]){
+    box(.065,.35,.11,x,2.18,.22,steel);
+    box(.08,.18,.17,x,1.87,.19,dark);
+  }
   for (let x=-42;x<43;x+=6) box(2.5,.018,.1,x,-.018,15,trim);
   for (const x of [-5.5,5.5]) {
     solid(.22,3,12,x,1.5,-6,wall);

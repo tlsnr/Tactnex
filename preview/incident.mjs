@@ -3,20 +3,21 @@
 export function createIncident(){
   const state={};
   function reset(){
-    Object.assign(state,{phase:'check',air:[300,290],elapsed:0,entryAir:[],inbound:0,
+    Object.assign(state,{phase:'check',waterReady:false,air:[300,290],elapsed:0,entryAir:[],inbound:0,
       reserveReached:false,aborted:false,reminders:0});
   }
   reset();
   function check(){
     if(state.phase!=='check') return '';
     state.phase='register';
-    return 'Truppkontrolle und Einsatzkurzprüfung simuliert. Sicherheitstrupp bereit. Jetzt bei der Atemschutzüberwachung anmelden.';
+    return 'Truppkontrolle und Einsatzkurzprüfung simuliert. Sicherheitstrupp bereit. Jetzt den Angriffsabgang am Verteiler öffnen.';
   }
-  function radio({outside,atGoal,extinguished}){
+  function radio({outside,atGoal,extinguished,waterAvailable=true}){
     switch(state.phase){
-      case 'check': return 'Zuerst die Truppkontrolle am Vorplatz durchführen.';
+      case 'check': return 'Zuerst die Truppkontrolle am Verteiler durchführen.';
       case 'register':
-        if(!outside) return 'Anmeldung am Vorplatz.';
+        if(!outside) return 'Anmeldung am Verteiler.';
+        if(!state.waterReady) return 'Zuerst den Angriffsabgang am Verteiler öffnen.';
         state.phase='advance';
         state.entryAir=[...state.air];
         return 'Atemschutzüberwachung: Angriffstrupp registriert. Vorgehen zum Technikraum.';
@@ -26,10 +27,10 @@ export function createIncident(){
         state.phase='attack';
         return 'Atemschutzüberwachung: Einsatzziel erreicht, Meldung registriert.';
       case 'attack':
-        if(state.reserveReached || extinguished) return beginReturn(extinguished,outside);
+        if(state.reserveReached || extinguished || !waterAvailable) return beginReturn(extinguished,outside);
         return 'Atemschutzüberwachung: Trupp am Einsatzziel. Rückwegreserve beachten.';
       case 'return':
-        if(!outside) return 'Gemeinsam zum Vorplatz zurückkehren und dort abmelden.';
+        if(!outside) return 'Gemeinsam zum Verteiler zurückkehren und dort abmelden.';
         state.phase='complete';
         return state.aborted?'Atemschutzüberwachung: Trupp abgemeldet. Einsatz abgebrochen.':'Atemschutzüberwachung: Trupp abgemeldet. Einsatz abgeschlossen.';
       default: return 'Atemschutzüberwachung: Übung beendet.';
@@ -38,8 +39,8 @@ export function createIncident(){
   function beginReturn(extinguished,outside){
     state.phase='return';
     state.aborted=!extinguished||outside;
-    if(outside) return 'Rückwegmeldung verspätet. Jetzt am Vorplatz abmelden.';
-    return 'Atemschutzüberwachung: Beginn des Rückwegs registriert. Trupp gemeinsam zurück zum Vorplatz.';
+    if(outside) return 'Rückwegmeldung verspätet. Jetzt am Verteiler abmelden.';
+    return 'Atemschutzüberwachung: Beginn des Rückwegs registriert. Trupp gemeinsam zurück zum Verteiler.';
   }
   function step(dt,{outside,moving,working}){
     if(!['advance','attack','return'].includes(state.phase)) return '';

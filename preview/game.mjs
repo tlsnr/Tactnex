@@ -1,3 +1,4 @@
+import {createDistributor, distributorPosition} from './distributor.mjs';
 import {createIncident} from './incident.mjs';
 import * as T from './vendor/three.module.min.mjs';
 import {createWorld, floorAt, canStand, leafDistance, material, clamp} from './world.mjs';
@@ -41,6 +42,7 @@ const sun=new T.DirectionalLight(0xffe1ac,2.25);
 sun.position.set(-9,13,12);
 scene.add(sun);
 const world=createWorld(scene);
+const distributor=createDistributor(world,scene);
 const fire=createFire(scene,world.surfaces);
 const {state}=fire;
 const incident=createIncident();
@@ -181,7 +183,7 @@ for(const [i,name] of devices.entries()){
 }
 function room(){
   const {x,z}=camera.position;
-  if(z>=0 || z<=-12 || Math.abs(x)>=5.5) return ['Vorplatz',-1];
+  if(z>=0 || z<=-12 || Math.abs(x)>=5.5) return [atAssembly()?'Verteiler':'Außenbereich',-1];
   if(feet<-.15 && z<-8.3 && x<-1.14) return ['Technikraum',0];
   if(feet<-.15 && z<-8.3 && x>1.14) return ['Lager',3];
   if(feet<-.15 && Math.abs(x)>1.14) return [x<0?'Technikraum':'Lager',x<0?0:3];
@@ -223,7 +225,7 @@ function use(){
   alarm.unlock();
   if(selected===1){
     if(squad.phase!=='attack'||squad.reserveReached){say('Strahlrohr im Angriff nach der Zielmeldung benutzen.');return;}
-    if(state.tank<=0){say('Tank leer. Am Vorplatz nachfüllen.');return;}
+    if(!squad.waterReady || state.tank<=0){say('Kein Löschwasser. Rückweg per Funk melden.');return;}
     state.flow=!state.flow;
   } else if(selected===2){
     openDevice('thermal');
@@ -237,14 +239,17 @@ function use(){
     radioUntil=performance.now()+850;
     devicesPanel.setRadio(true);
     alarm.radio();
-    say(incident.radio({outside:atAssembly(),atGoal:atTarget(),extinguished:state.heat===0}));
+    say(incident.radio({outside:atAssembly(),atGoal:atTarget(),extinguished:state.heat===0,waterAvailable:state.tank>0}));
     state.reported=squad.phase==='complete'&&!squad.aborted;
   } else if(selected===5){
     flashlight=!flashlight;
     lamp.intensity=flashlight?31:0;
-  } else if(camera.position.z>1.3 && Math.abs(camera.position.x)<7){
-    if(squad.phase==='check') say(incident.check());
-    else {state.tank=420;say('Wassertank am Vorplatz aufgefüllt.');}
+  } else if(atAssembly() && squad.phase==='check'){
+    say(incident.check());
+  } else if(atAssembly() && squad.phase==='register' && !squad.waterReady){
+    squad.waterReady=true;
+    distributor.setCharged(true);
+    say('Angriffsabgang geöffnet. Die vorbereitete Leitung steht unter Druck.');
   } else interact();
 }
 ui('use').onclick=use;
@@ -257,6 +262,7 @@ ui('actions').append(patternButton);
 function reset(){
   fire.reset();
   incident.reset();
+  distributor.setCharged(false);
   closeDevice();
   radioUntil=0;
   feet=yaw=pitch=0;
@@ -354,7 +360,7 @@ function movePlayer(dt){
   camera.rotation.set(pitch,yaw,0,'YXZ');
 }
 function atAssembly(){
-  return camera.position.z>1.3&&Math.abs(camera.position.x)<7;
+  return Math.hypot(camera.position.x-distributorPosition.x,camera.position.z-distributorPosition.z)<3.1;
 }
 function atTarget(){
   const {x,z}=camera.position;
@@ -364,11 +370,11 @@ function updateHud(now){
   const [label,index]=room();
   ui('location').textContent=label;
   const goals={
-    check:'Am Vorplatz · Hände → Truppkontrolle',
-    register:'Atemschutzüberwachung per Funk anmelden',
+    check:'Am Verteiler · Truppkontrolle durchführen',
+    register:squad.waterReady?'Atemschutzüberwachung per Funk anmelden':'Angriffsabgang am Verteiler öffnen',
     advance:'Zum Technikraum vorgehen und Einsatzziel melden',
-    attack:state.heat===0?'Feuer aus · Rückweg per Funk melden':'Brandbekämpfung · Rückwegreserve beachten',
-    return:'Zum Vorplatz zurück und per Funk abmelden',
+    attack:state.tank<=0?'Löschwasser aufgebraucht · Rückweg melden':state.heat===0?'Feuer aus · Rückweg per Funk melden':'Brandbekämpfung · Rückwegreserve beachten',
+    return:'Zum Verteiler zurück und per Funk abmelden',
     complete:squad.aborted?'Trupp abgemeldet · Einsatz abgebrochen':'Trupp abgemeldet · Einsatz abgeschlossen',
     failed:'Übung abgebrochen · Atemluft erschöpft'
   };
@@ -379,7 +385,7 @@ function updateHud(now){
   ui('objective').textContent=goal;
   ui('feedback').textContent=now<until?notification:state.jetHit?'Wasser trifft den Brandherd · Brand kühlt ab.':'';
   let gauges='';
-  if(selected===1) gauges='Wasser '+Math.ceil(state.tank)+' / 420 L';
+  if(selected===1) gauges='Löschwasser am Fahrzeug '+Math.ceil(state.tank)+' / 420 L';
   if(measuring){
     const values=meterValues(index<0?0:state.smoke[index],index===0?state.heat:0);
     devicesPanel.updateMeter(values);
@@ -391,16 +397,18 @@ function updateHud(now){
   const door=nearestDoor();
   ui('interact').textContent=door?door.label+(door.open?' schließen':' öffnen'):'Tür';
   ui('interact').disabled=!door;
-  const outside=camera.position.z>1.3&&Math.abs(camera.position.x)<7;
+  const atDistributor=atAssembly();
+  const checkReady=atDistributor&&squad.phase==='check';
+  const valveReady=atDistributor&&squad.phase==='register'&&!squad.waterReady;
   ui('use').textContent=[
-    outside?(squad.phase==='check'?'Truppkontrolle':'Tank füllen'):'Interagieren',
+    checkReady?'Truppkontrolle':valveReady?'Angriffsabgang öffnen':'Interagieren',
     state.flow?'Wasser stoppen':'Wasser abgeben',
     'Wärmebild anzeigen',
     measuring?'Messung aus':'Messen',
     'Funken',
     flashlight?'Lampe aus':'Lampe an'
   ][selected];
-  ui('use').disabled=(selected===0&&!outside&&!door)||(selected===2&&thermal);
+  ui('use').disabled=(selected===0&&!checkReady&&!valveReady&&!door)||(selected===2&&thermal);
   patternButton.hidden=selected!==1;
   patternButton.textContent=state.pattern?'Sprühstrahl':'Vollstrahl';
 }
@@ -414,7 +422,7 @@ function frame(now){
     const message=incident.step(dt,{outside:atAssembly(),
       moving:Math.hypot(camera.position.x-previousX,camera.position.z-previousZ)>.001,working:state.flow});
     if(message) say(message);
-    if(squad.reserveReached||squad.phase==='failed') state.flow=false;
+    if(squad.reserveReached||squad.phase!=='attack') state.flow=false;
     const sway=Math.sin(now*.004)*.016;
     hand.position.y=-.33+sway;
     right.pose(Math.max(0,sway)*3);
