@@ -1,64 +1,10 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>TactNex – 3D-Prototyp</title><style>html,body{margin:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#111;color:white;font:15px system-ui;touch-action:none}canvas{display:block;touch-action:none;-webkit-user-select:none}button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}#pad,#look{z-index:20;touch-action:none}#pad button,#look button{min-width:55px;min-height:55px;opacity:1}#hud,#note{pointer-events:none}#interact{z-index:20}#hud{position:absolute;top:12px;left:12px;background:#101923d9;padding:12px;border-radius:12px;max-width:290px}#status{font-size:13px;color:#bfe2fa;margin-top:5px}#interact{position:absolute;right:22px;bottom:110px;padding:18px;border:0;border-radius:14px;background:#e5b24d;color:#171717;font-weight:bold;display:none}#pad{position:absolute;left:25px;bottom:35px;display:grid;grid-template-columns:repeat(3,55px);gap:5px}#pad button,#look button{background:#ffffff35;color:white;border:1px solid #ffffff66;border-radius:12px;height:52px;font-size:22px;touch-action:none}#pad button:active,#look button:active{background:#ffffff88}#look{position:absolute;right:20px;bottom:24px;display:flex;gap:8px}#note{position:absolute;top:12px;right:12px;font-size:12px;background:#101923b8;padding:8px;border-radius:8px}#cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}button{cursor:pointer}</style></head><body><div id="hud"><b>TactNex · Kellerbrand</b><div id="status">Links: Bewegungstasten. Rechts auf dem Bild wischen: umsehen, auch hoch/runter.</div></div><div id="note">Prototyp · keine einsatztaktische Bewertung</div><div id="cross">+</div><button id="interact">Tür öffnen</button><div id="pad"><span></span><button data-key="forward">▲</button><span></span><button data-key="left">◀</button><button data-key="back">▼</button><button data-key="right">▶</button></div><div id="look"><button data-key="turnleft">↶</button><button data-key="turnright">↷</button></div><script type="module">
-import * as THREE from 'https://esm.sh/three@0.170.0';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9eb7c9);scene.fog=new THREE.Fog(0x9eb7c9,25,70);
-const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.08,120);camera.position.set(0,1.65,10);let yaw=0,pitch=0;
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);document.body.prepend(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xffffff,0x58616a,2));const sun=new THREE.DirectionalLight(0xffffff,2.1);sun.position.set(7,12,9);scene.add(sun);
-function box(w,h,d,x,y,z,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.9}));m.position.set(x,y,z);scene.add(m);return m}
-box(80,.15,80,0,-.12,0,0x547348);box(5,.05,18,0,.01,5,0xaaaaa3);
-// House front wall with a real doorway gap: doorway x=-.8..+.8, house spans x=-5..5.
-box(4.2,3.4,.25,-2.9,1.7,0,0xe8dfcd);box(4.2,3.4,.25,2.9,1.7,0,0xe8dfcd);box(1.6,.85,.25,0,2.975,0,0xe8dfcd);
-box(.25,3.4,9,-5,1.7,-4.5,0xe8dfcd);box(.25,3.4,9,5,1.7,-4.5,0xe8dfcd);box(10,3.4,.25,0,1.7,-9,0xe8dfcd);box(10,.15,9,0,.01,-4.5,0xb4a797);
-box(10,.3,9,0,3.55,-4.5,0x5e5754);
-for(const x of [-3.2,3.2]){box(1.6,1.5,.05,x,1.8,.15,0x536c77);box(.08,1.6,.1,x,1.8,.2,0xffffff);box(1.6,.08,.1,x,1.8,.2,0xffffff)}
-const hinge=new THREE.Group();hinge.position.set(-.8,0,.02);scene.add(hinge);const door=new THREE.Mesh(new THREE.BoxGeometry(1.6,2.12,.1),new THREE.MeshStandardMaterial({color:0x805a3c}));door.position.set(.8,1.06,0);hinge.add(door);const handle=new THREE.Mesh(new THREE.SphereGeometry(.065,12,12),new THREE.MeshStandardMaterial({color:0xd4bc79}));handle.position.set(1.42,1.06,.08);hinge.add(handle);
-// Interior hall, stairs represented by a visible descent at the back.
-box(2,.08,4,0,.08,-6.7,0x706f6b);for(let i=0;i<7;i++)box(2,.13,.38,0,.13-i*.07,-6.5-i*.37,0x6b6761);
-// Basement test space is physically below the ground floor; the stair is a sloping walkable path.
-// The initial prototype's decorative staircase is hidden and replaced with actual steps.
-for(const obj of [...scene.children]){if(obj.isMesh && obj.geometry?.parameters?.width===2 && obj.position.z < -5 && obj.position.z > -9 && obj.material?.color?.getHex()===0x6b6761) obj.visible=false;}
-const basementDoor=box(2,2.2,.12,0,-1.5,-10.8,0x544b42);
-// An open basement volume behind the staircase, with walls and floor.
-box(9,.16,8,0,-2.7,-13,0x80766c);
-box(.2,2.7,8,-4.5,-1.35,-13,0xc9c2b7);box(.2,2.7,8,4.5,-1.35,-13,0xc9c2b7);
-box(9,2.7,.2,0,-1.35,-17,0xc9c2b7);
-// Staircase goes from z=-5.4 at ground level to z=-10.4 at basement level.
-const stairStart=-5.4,stairEnd=-10.4,stairCount=14;
-for(let i=0;i<stairCount;i++){const z=stairStart-(i+.5)*(5/stairCount);const y=-(i+1)*2.7/stairCount;box(1.9,.12,5/stairCount,0,y-.07,z,0x77716b)}
-// Low wall dividing the basement into two simple rooms.
-box(3,.2,.18,-2.8,-1.25,-13.2,0xbbb3a8);
-
-const keys=new Set(),status=document.querySelector('#status'),action=document.querySelector('#interact');let open=false,doorAngle=0;
-function interact(){if(Math.abs(camera.position.x)<2.1&&Math.abs(camera.position.z)<2.7){open=!open;status.textContent=open?'Haustür öffnet sich.':'Haustür schließt sich.'}}
-action.addEventListener('click',interact);document.addEventListener('keydown',e=>{keys.add(e.key.toLowerCase());if(e.key.toLowerCase()==='e')interact()});document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));document.addEventListener('contextmenu',e=>e.preventDefault());document.addEventListener('selectstart',e=>e.preventDefault());document.addEventListener('dragstart',e=>e.preventDefault());
-for(const b of document.querySelectorAll('[data-key]')){const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);keys.add(k)});for(const evt of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(evt,()=>keys.delete(k))}
-let lookPointer=null,lookX=0,lookY=0;
-renderer.domElement.addEventListener('pointerdown',e=>{lookPointer=e.pointerId;lookX=e.clientX;lookY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});
-renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;const dx=e.clientX-lookX,dy=e.clientY-lookY;yaw-=dx*.004;pitch=Math.max(-1.25,Math.min(1.25,pitch-dy*.004));lookX=e.clientX;lookY=e.clientY});
-for(const ev of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(ev,e=>{if(e.pointerId===lookPointer)lookPointer=null});
-let prev=performance.now();function tick(t){const dt=Math.min((t-prev)/1000,.04);prev=t;const turn=(keys.has('turnleft')||keys.has('arrowleft')?1:0)-(keys.has('turnright')||keys.has('arrowright')?1:0);yaw+=turn*dt*1.7;camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
-const targetAngle=open?-Math.PI*.55:0;doorAngle+=(targetAngle-doorAngle)*Math.min(1,dt*7);hinge.rotation.y=doorAngle;let f=Number(keys.has('forward')||keys.has('w')||keys.has('arrowup'))-Number(keys.has('back')||keys.has('s')||keys.has('arrowdown'));let s=Number(keys.has('right')||keys.has('d'))-Number(keys.has('left')||keys.has('a'));const speed=3.2*dt;const nx=camera.position.x+(Math.sin(yaw)*-f+Math.cos(yaw)*s)*speed,nz=camera.position.z+(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed;
-// Collision with front wall and door: test the entire movement segment, not only the endpoint.
-const px=camera.position.x,pz=camera.position.z,r=.24;
-function passable(x,z){
-  if(z < -16.65 || (z < -.3 && (x < -4.65 || x > 4.65))) return false;
-  // Front wall is at z=0; doorway is x=-0.8..0.8.
-  if(Math.abs(z)<.18+r){
-    if(Math.abs(x)>.8-r)return false;
-    if(!open || Math.abs(doorAngle)<1.12)return false;
-  }
-  // Door leaf swings toward exterior on the left hinge; approximate solid segment.
-  const ax=-.8,az=.02,bx=ax+1.6*Math.cos(doorAngle),bz=az-1.6*Math.sin(doorAngle);
-  const vx=bx-ax,vz=bz-az,wx=x-ax,wz=z-az;
-  const u=Math.max(0,Math.min(1,(wx*vx+wz*vz)/(vx*vx+vz*vz)));
-  if(Math.hypot(x-(ax+u*vx),z-(az+u*vz))<r+.07)return false;
-  return true;
-}
-let cx=px,cz=pz;const steps=Math.max(1,Math.ceil(Math.hypot(nx-px,nz-pz)/.09));
-for(let i=1;i<=steps;i++){const tx=px+(nx-px)*i/steps,tz=pz+(nz-pz)*i/steps;if(passable(tx,tz)){cx=tx;cz=tz}else break}
-camera.position.x=cx;camera.position.z=cz;
-const inHouse=cx>-4.7&&cx<4.7&&cz<-.3&&cz>-16.7;
-const stairProgress=Math.max(0,Math.min(1,(-cz-5.4)/5));camera.position.y=1.65-2.7*stairProgress;
-const near=Math.abs(camera.position.x)<2&&Math.abs(camera.position.z)<2.6;action.style.display=near?'block':'none';action.textContent=open?'Tür schließen':'Tür öffnen';if(inHouse&&camera.position.z< -10.4)status.textContent='Im Kellergeschoss (Testbereich).';else if(inHouse&&camera.position.z< -5.4)status.textContent='Du gehst die Kellertreppe hinunter.';else if(inHouse)status.textContent='Im Hausflur. Gehe zur Kellertreppe.';renderer.render(scene,camera);requestAnimationFrame(tick)}requestAnimationFrame(tick);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-</script></body></html>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="0;url=./preview/">
+<title>TactNex · Entwicklungsvorschau</title>
+</head>
+<body><a href="./preview/">TactNex-Entwicklungsvorschau öffnen</a></body>
+</html>

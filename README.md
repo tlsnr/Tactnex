@@ -1,30 +1,32 @@
-# SMOKELAB V3 – erster 3D-Prototyp
+# TactNex · Kellerbrand
 
-Ein minimaler, **wirklich dreidimensionaler** Browser-Prototyp: Vorplatz, Einfamilienhaus, bewegliche Haustür, Flur, angedeuteter Kellerabgang. **Kein** fertiger Feuerwehrsimulator, kein Multiplayer und keine fachlich geprüfte Übung.
+Spielbare 3D-Entwicklungsvorschau auf `neubau-v1`. Die veröffentlichte Fassung liegt auf `main`.
 
-## Testen
+## Starten
 
-Benötigt Internet für das Three.js-Modul (`esm.sh`). Lokal im Projektordner:
+Im Repository auf `neubau-v1` wechseln und einen statischen Server starten:
 
-```bash
+```sh
 python3 -m http.server 8000
 ```
 
-Dann am Entwicklungscomputer `http://localhost:8000` öffnen. Für iPads im selben WLAN die lokale IP des Computers anstelle von `localhost` verwenden (Firewall prüfen). iPad: Pfeiltasten unten links bewegen, ↶/↷ drehen, über die Szene ziehen zum Umsehen, `Tür öffnen` in Türnähe. PC: WASD und E.
+[localhost:8000/preview/](http://localhost:8000/preview/) öffnen. Auf dem iPad im gleichen WLAN statt `localhost` die LAN-Adresse des Rechners verwenden. Die Vorschau benötigt WebGL 2. Three.js r170 (MIT) ist unter `preview/vendor/` enthalten. Es sind kein Build, kein externer Laufzeitdienst und kein Konto nötig.
 
-## GitHub
+## Spielen
 
-Neues leeres Repository `smokelab-v3` erstellen; diese Dateien hochladen oder `git init`, `git add .`, `git commit -m "Initial 3D prototype"` und das Repository als `origin` verbinden. Es wurden keine Konten verbunden oder Uploads ausgeführt.
+Durch die Haustür und den Flur zur Kellertreppe. Im Keller den Technikraum öffnen und den Brandherd mit dem Strahlrohr treffen. Sobald der Brand aus ist, zurück zum Vorplatz und über das Funkgerät melden.
 
-## Firebase Hosting (optional, Spark)
+| Aktion | Desktop | iPad |
+| --- | --- | --- |
+| Bewegen | WASD | Linker Stick |
+| Umsehen | Maus auf der Szene ziehen | Auf der Szene wischen |
+| Tür bedienen | E | Tür-Schaltfläche |
+| Gerät wählen | 1 bis 6 | Geräteleiste |
+| Gerät benutzen | F | Rechte Aktionsschaltfläche |
+| Ducken | C | Ducken |
 
-1. Firebase-Projekt im kostenlosen Spark-Tarif erstellen.
-2. Firebase CLI lokal installieren und `firebase login` ausführen.
-3. `firebase init hosting` im Projektordner; öffentliches Verzeichnis `.`; keine bestehende `index.html` überschreiben lassen.
-4. `firebase deploy --only hosting`.
+Das Strahlrohr bietet Voll- und Sprühstrahl sowie einen begrenzten Tank. Zum Nachfüllen am Vorplatz „Hände“ wählen und „Tank füllen“ antippen. Lampe, relative Wärmebildansicht und Messgerät unterstützen die Erkundung. Die Übung lässt sich mit ↻ zurücksetzen.
 
-**Achtung:** Firebase Hosting benötigt Internet. Für echtes Multiplayer-Synchronisieren benötigen wir später Firebase Realtime Database mit Authentifizierung und sicheren Regeln; das ist **noch nicht implementiert**. Keine offenen Datenbankregeln für eine produktive App verwenden.
+## Modellgrenzen
 
-## Nächste Schritte
-
-Kollisionssystem verbessern, Türinteraktionen und Ausrüstung, Ausbilder-Ansicht, Szenariozustand, 2/3-iPad-Synchronisierung, regelbasierter KI-Partner, fachliche Prüfung anhand FwDV und Herstellerdokumentation.
+Das Szenario enthält ein Erdgeschoss und einen Keller, ein Fahrzeug als Kulisse sowie einen festen Brandherd. Feuer, Rauch, Dampf, Wasserwirkung und Messwerte sind vereinfachte Spielmodelle. Es gibt keine Brandweiterleitung zwischen Gegenständen, keine Schlauchverlegung, keine Atemschutzsimulation und keinen Mehrspielerbetrieb.

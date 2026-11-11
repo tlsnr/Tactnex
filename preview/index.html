@@ -1,98 +1,29 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#101820"><title>TactNex Neubau · Einsatztraining</title>
-<style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101820;color:#fff;font:14px system-ui;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}canvas{display:block;touch-action:none}button{touch-action:none;cursor:pointer;color:#fff;border:1px solid #ffffff66;background:#1c2b36ed;border-radius:12px;font:700 14px system-ui;padding:12px}button:active{background:#bd8d35}#top{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;justify-content:space-between;pointer-events:none}#panel,#message{background:#10212ae8;border:1px solid #ffffff33;padding:10px 13px;border-radius:12px;max-width:58vw}#message{max-width:34vw;text-align:right}#controls{position:fixed;bottom:16px;left:15px;display:grid;grid-template-columns:repeat(3,54px);gap:5px}#controls button{width:54px;height:54px;padding:0;font-size:24px}#tools{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);max-width:53vw;display:flex;gap:6px;overflow:auto;padding:6px;background:#10212ae0;border-radius:13px}#tools button{white-space:nowrap;font-size:12px;padding:10px}#actions{position:fixed;right:14px;bottom:20px;display:flex;flex-direction:column;gap:8px}#actions button{min-width:110px}#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;text-shadow:0 1px 5px black;pointer-events:none}#intro{position:fixed;inset:0;background:#0a151ddf;display:flex;align-items:center;justify-content:center;z-index:40;padding:20px}#intro article{max-width:480px;background:#182a36;border:1px solid #ffffff44;border-radius:18px;padding:25px;line-height:1.5}#intro h1{margin-top:0}#intro button{background:#bf8c31;color:#111;width:100%;margin-top:14px}small{color:#bdcbd1}@media(max-width:680px){#tools{bottom:80px;max-width:62vw;left:51%}#actions{bottom:20px}#panel{max-width:55vw;font-size:12px}#message{max-width:42vw;font-size:11px}}</style></head>
-<body><div id="top"><div id="panel"><strong>TACTNEX · NEUBAU</strong><div id="status">Einsatzstelle erkunden</div></div><div id="message">Training · keine reale Einsatzfreigabe</div></div><div id="cross">+</div><div id="controls"><span></span><button data-move="f">▲</button><span></span><button data-move="l">◀</button><button data-move="b">▼</button><button data-move="r">▶</button></div><div id="tools"></div><div id="actions"><button id="use">Benutzen</button><button id="interact">Interagieren</button><button id="reset">Neustart</button></div><div id="intro"><article><h1>TactNex · Neubau</h1><p>Eigenständiger technischer Neubeginn mit begehbarem Haus, Keller, Kollisionen, Türinteraktion, Brandherd, Rauch und Wasserwirkung.</p><p><small>Entwicklungsfassung: Geräte und Brandverhalten sind vereinfacht. Keine einsatztaktische Ausbildung oder echte Messwerte.</small></p><p>Links bewegen, rechts im Bild wischen zum Umsehen. Gerät unten auswählen.</p><button id="start">Simulation starten</button></article></div>
-<script type="module">
-import * as THREE from 'https://esm.sh/three@0.170.0';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9db3c4);scene.fog=new THREE.FogExp2(0x9db3c4,.012);
-const camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.07,130);camera.position.set(0,1.65,12);camera.rotation.order='YXZ';
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.25));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;document.body.prepend(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xe5f4ff,0x4c544d,2));const sun=new THREE.DirectionalLight(0xfff1d6,2.2);sun.position.set(12,20,8);sun.castShadow=true;sun.shadow.mapSize.set(768,768);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
-const mat=(c,roughness=.85)=>new THREE.MeshStandardMaterial({color:c,roughness});
-const walls=mat(0xd4cbbd),floorMat=mat(0x8f7963),basementMat=mat(0x747577),roofMat=mat(0x774335),glass=new THREE.MeshPhysicalMaterial({color:0x78a8bb,metalness:.1,roughness:.14,transparent:true,opacity:.7,side:THREE.DoubleSide});
-function obj(geo,m,x,y,z,parent=scene){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
-function cube(w,h,d,x,y,z,m,parent){return obj(new THREE.BoxGeometry(w,h,d),m,x,y,z,parent)}
-function plane(w,d,x,y,z,m){const o=obj(new THREE.PlaneGeometry(w,d),m,x,y,z);o.rotation.x=-Math.PI/2;return o}
-const ground=plane(120,120,0,-.12,0,mat(0x55754b));plane(120,7,0,-.10,21,mat(0x555b5c));plane(2.6,12,0,-.08,7,mat(0xada69a));plane(4.3,19,8,-.08,9,mat(0x8e918e));
-for(let x=-54;x<55;x+=8)cube(3,.015,.1,x,-.075,21,mat(0xded9bc));
-const colliders=[];function solid(w,h,d,x,y,z,m){const a=cube(w,h,d,x,y,z,m);colliders.push({x,z,w,d,y,h,mesh:a});return a}
-function tree(x,z,s){const bark=mat(0x5c4534),leaf=mat(0x3a6738);obj(new THREE.CylinderGeometry(.12*s,.26*s,3*s,9),bark,x,1.45*s,z);for(let i=0;i<6;i++){const a=i*2.4;obj(new THREE.IcosahedronGeometry((.85+(i%3)*.13)*s,1),leaf,x+Math.cos(a)*.65*s,(3.1+(i%3)*.38)*s,z+Math.sin(a)*.65*s)}}
-for(const [x,z,s] of [[-12,9,1.1],[13,9,1],[-12,-8,.9],[13,-9,1.1],[-19,17,1.2]])tree(x,z,s);
-for(let z=-12;z<17;z+=1.3)for(const x of [-8.3,10])obj(new THREE.IcosahedronGeometry(.55,1),mat(0x426a37),x,.36,z);
-const body=mat(0x284f6c),tire=mat(0x202225),windowMat=mat(0x263d4a,.18);
-cube(1.9,.55,4.2,8,.65,7,body);cube(1.65,.58,2,8,1.21,6.65,windowMat);for(const x of [7.03,8.97])for(const z of [5.7,8.3]){const w=obj(new THREE.CylinderGeometry(.37,.37,.17,16),tire,x,.37,z);w.rotation.z=Math.PI/2}
-for(const x of [7.35,8.65]){cube(.36,.16,.07,x,.75,4.88,mat(0xe9d9a8));cube(.34,.14,.07,x,.75,9.12,mat(0xa82824))}
-const house={front:0,back:-10,left:-5,right:5};
-solid(.22,3.4,10,-5,1.7,-5,walls);solid(.22,3.4,10,5,1.7,-5,walls);solid(10,3.4,.22,0,1.7,-10,walls);
-solid(4.15,3.4,.22,-2.925,1.7,0,walls);solid(4.15,3.4,.22,2.925,1.7,0,walls);solid(1.7,1.18,.22,0,2.81,0,walls);
-for(const x of [-3.1,3.1]){cube(1.6,1.45,.05,x,1.8,.14,glass);cube(1.85,.11,.3,x,1,.24,mat(0xd8d8d2));cube(.1,1.5,.12,x,1.8,.2,mat(0xe9e6dd));cube(1.75,.1,.12,x,1.8,.2,mat(0xe9e6dd))}
-plane(4,10,-3,.01,-5,floorMat);plane(4,10,3,.01,-5,floorMat);plane(2,5.2,0,.01,-2.6,floorMat);
-const roofGeo=(left)=>{const x0=left?-5.55:0,x1=left?0:5.55,y0=left?3.5:5.55,y1=left?5.55:3.5;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute([x0,y0,.6,x1,y1,.6,x1,y1,-10.6,x0,y0,.6,x1,y1,-10.6,x0,y0,-10.6],3));g.computeVertexNormals();return g};
-const roofSurface=mat(0x794333);roofSurface.side=THREE.DoubleSide;obj(roofGeo(true),roofSurface,0,0,0);obj(roofGeo(false),roofSurface,0,0,0);
-const gableMat=mat(0xd4cbbd);gableMat.side=THREE.DoubleSide;for(const z of [0,-10]){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute([-5,3.4,z,5,3.4,z,0,5.55,z],3));g.computeVertexNormals();obj(g,gableMat,0,0,0)}
-cube(.65,1.5,.65,2.6,5.55,-7,mat(0x9c594a));
-cube(1.7,.06,3.3,0,.06,-2.7,mat(0x78604e));
-cube(2.2,.62,.86,-3.35,.39,-4,mat(0x506b78));cube(1.75,.13,.65,-3.35,.77,-4,mat(0x647f8b));cube(1.3,.4,.8,-3.3,.22,-5.5,mat(0x7b5c48));
-cube(2.7,.8,.65,3.3,.42,-8.7,mat(0xc5bfb1));cube(2.7,.06,.85,3.3,.85,-8.7,mat(0x4e5154));
-const lamp=new THREE.PointLight(0xffe7bf,1.7,11);lamp.position.set(0,2.9,-3.4);scene.add(lamp);
-// Basement is a separate real volume, reached through a floor opening and a continuous ramp-like stair surface.
-plane(9,9,0,-2.75,-13.5,basementMat);
-solid(.2,2.8,9,-4.5,-1.4,-13.5,walls);solid(.2,2.8,9,4.5,-1.4,-13.5,walls);solid(9,2.8,.2,0,-1.4,-18,walls);
-solid(.17,2.8,5,-1.13,-1.2,-7.9,walls);solid(.17,2.8,5,1.13,-1.2,-7.9,walls);
-for(let i=0;i<15;i++){const z=-5.25-(i+.5)*5/15,y=-(i+1)*2.75/15;cube(2,.1,5/15,0,y-.05,z,mat(0x80756b))}
-cube(1.8,.75,.85,-3.1,-2.35,-16,mat(0x70543c));cube(1.9,.07,.95,-3.1,-1.94,-16,mat(0x987657));
-for(let y=-2.2;y<-.5;y+=.48)cube(1.5,.07,.55,3.2,y,-17,mat(0x5d6465));
-for(const [x,z] of [[3,-15],[3.6,-14.3],[-2.6,-13]])cube(.6,.6,.6,x,-2.4,z,mat(0x967c58));
-const basementLight=new THREE.PointLight(0xffdfad,1.1,9);basementLight.position.set(1,-.6,-13);scene.add(basementLight);
-const hinge=new THREE.Group();hinge.position.set(-.85,0,.04);scene.add(hinge);cube(1.7,2.15,.09,.85,1.075,0,mat(0x7b5337),hinge);obj(new THREE.SphereGeometry(.065,12,8),mat(0xc6ac6d),1.52,1.05,.09,hinge);
-let doorOpen=false,doorAngle=0;
-const fire=new THREE.Group();fire.position.set(-2.5,-2.7,-15.5);scene.add(fire);
-const flames=[];for(let i=0;i<10;i++){const m=new THREE.MeshBasicMaterial({color:i%3?0xff6b14:0xffc638,transparent:true,opacity:.8,depthWrite:false});const f=obj(new THREE.ConeGeometry(.17+(i%4)*.07,.8+(i%3)*.2,7),m,(i%4-1.5)*.26,.4,Math.floor(i/4)*.25,fire);flames.push(f)}
-const fireLight=new THREE.PointLight(0xff4e10,3.5,8);fireLight.position.set(-2.5,-1.8,-15.5);scene.add(fireLight);
-const smoke=[];const smokeMat=new THREE.MeshBasicMaterial({color:0x53575b,transparent:true,opacity:.12,depthWrite:false});for(let i=0;i<55;i++)smoke.push(obj(new THREE.IcosahedronGeometry(.4,1),smokeMat.clone(),0,-2,-15));
-const water=[];const waterMat=new THREE.MeshBasicMaterial({color:0xa4e5ff,transparent:true,opacity:.8});for(let i=0;i<45;i++){const m=obj(new THREE.SphereGeometry(.028,5,4),waterMat,0,0,0);m.visible=false;water.push(m)}
-let strength=1,smokeAmount=.2,waterOn=false,thermal=false,selected='Hände',waterHits=0,elapsed=0;
-const hand=new THREE.Group();camera.add(hand);scene.add(camera);hand.position.set(.52,-.5,-.82);
-cube(.2,.19,.37,0,-.08,.13,mat(0x1e2527),hand);const held=new THREE.Group();hand.add(held);
-function equip(name){selected=name;held.clear();waterOn=false;thermal=false;document.querySelector('#use').textContent='Benutzen';const add=(w,h,d,x,y,z,c)=>cube(w,h,d,x,y,z,mat(c),held);
-if(name==='Wärmebildkamera'){add(.33,.36,.2,0,.16,-.15,0x262b2f);add(.26,.2,.012,0,.2,-.26,0x6b8791);add(.11,.35,.12,0,-.2,-.12,0x222629)}
-if(name==='Messgerät'){add(.23,.43,.13,0,.12,-.17,0x24292d);add(.17,.18,.014,0,.17,-.25,0x9db9c4)}
-if(name==='Strahlrohr'){const a=obj(new THREE.CylinderGeometry(.07,.1,.65,12),mat(0x687178),0,.1,-.27,held);a.rotation.x=Math.PI/2}
-if(name==='Funkgerät'){add(.19,.3,.1,0,.12,-.2,0x23292b);const a=obj(new THREE.CylinderGeometry(.012,.012,.2,8),mat(0x222222),.06,.36,-.2,held)}
-if(name==='Axt'){const a=obj(new THREE.CylinderGeometry(.03,.035,.8,8),mat(0x77583c),0,.2,-.18,held);a.rotation.z=-.15;add(.3,.17,.06,-.06,.56,-.18,0x91999c)}
-document.querySelector('#status').textContent=name+' ausgewählt'}
-const toolNames=['Hände','Strahlrohr','Wärmebildkamera','Messgerät','Funkgerät','Axt'];for(const name of toolNames){const b=document.createElement('button');b.textContent=name;b.onclick=()=>{equip(name);for(const x of document.querySelector('#tools').children)x.style.background='';b.style.background='#996c26'};document.querySelector('#tools').append(b)}equip('Hände');
-const haze=document.createElement('div');haze.style.cssText='position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,#555d60 0%,#1a2027 95%);opacity:0;z-index:2';document.body.append(haze);const overlay=document.createElement('div');overlay.style.cssText='position:fixed;z-index:3;inset:19% 22%;pointer-events:none;border:9px solid #182329;border-radius:15px;background:radial-gradient(circle at 44% 65%,#fff9b0,#f46a28 17%,#74358c 45%,#172c62 90%);opacity:.8;display:none';overlay.innerHTML='<span style="display:block;padding:8px;background:#121c25a8;font-size:12px">WÄRMEBILD · DEMO / KEINE TEMPERATURMESSUNG</span>';document.body.append(overlay);
-const status=document.querySelector('#status');document.querySelector('#reset').onclick=()=>{strength=1;smokeAmount=.2;waterHits=0;waterOn=false;doorOpen=false;camera.position.set(0,1.65,12);yaw=0;pitch=0;equip('Hände');document.querySelector('#use').textContent='Benutzen';status.textContent='Szenario neu gestartet'};function interact(){const d=Math.hypot(camera.position.x,camera.position.z);if(d<2.5){doorOpen=!doorOpen;status.textContent=doorOpen?'Haustür geöffnet':'Haustür geschlossen'}else status.textContent='Keine Tür in Reichweite'}
-function use(){if(selected==='Strahlrohr'){waterOn=!waterOn;document.querySelector('#use').textContent=waterOn?'Wasser stoppen':'Wasser abgeben';status.textContent=waterOn?'Strahlrohr aktiv':'Strahlrohr geschlossen'}else if(selected==='Wärmebildkamera'){thermal=!thermal;overlay.style.display=thermal?'block':'none'}else if(selected==='Messgerät')status.textContent='DEMO: O₂ 20,9 % · weitere Werte nicht simuliert';else if(selected==='Funkgerät')status.textContent='Übungsfunk: kein Funknetz verbunden';else status.textContent='Für dieses Werkzeug noch keine Aktion'}
-document.querySelector('#interact').onclick=interact;document.querySelector('#use').onclick=use;
-const pressed=new Set();for(const b of document.querySelectorAll('[data-move]')){const k=b.dataset.move;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);pressed.add(k)});for(const type of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(type,()=>pressed.delete(k))}
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();pressed.add(({w:'f',s:'b',a:'l',d:'r'})[k]||k);if(k==='e')interact();if(k==='f'&&!e.repeat)use()});addEventListener('keyup',e=>pressed.delete(({w:'f',s:'b',a:'l',d:'r'})[e.key.toLowerCase()]||e.key.toLowerCase()));
-let lookId=null,lx=0,ly=0,yaw=0,pitch=0;renderer.domElement.addEventListener('pointerdown',e=>{if(lookId!==null)return;lookId=e.pointerId;lx=e.clientX;ly=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId!==lookId)return;yaw-=(e.clientX-lx)*.004;pitch=Math.max(-1.3,Math.min(1.3,pitch-(e.clientY-ly)*.004));lx=e.clientX;ly=e.clientY});for(const type of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(type,e=>{if(e.pointerId===lookId)lookId=null});
-function blocked(x,z,y){const r=.25;if(z< -17.7||Math.abs(x)>48)return true;for(const w of colliders){if(y+.2<w.y-w.h/2||y-1.4>w.y+w.h/2)continue;if(Math.abs(x-w.x)<w.w/2+r&&Math.abs(z-w.z)<w.d/2+r)return true}
-if(Math.abs(z)<.23+r&&Math.abs(x)<.85+r){if(!doorOpen||Math.abs(doorAngle)<1.15)return true}
-const ax=-.85,az=.04,bx=ax+1.7*Math.cos(doorAngle),bz=az-1.7*Math.sin(doorAngle);const vx=bx-ax,vz=bz-az;const t=Math.max(0,Math.min(1,((x-ax)*vx+(z-az)*vz)/(vx*vx+vz*vz)));if(Math.hypot(x-(ax+t*vx),z-(az+t*vz))<r+.07)return true;
-if(z< -5.25&&z> -10.25&&Math.abs(x)>1)return true;return false}
-let last=performance.now();let fpsTimer=0,fpsFrames=0;function frame(now){const dt=Math.min(.045,(now-last)/1000);last=now;fpsTimer+=dt;fpsFrames++;if(fpsTimer>2){document.querySelector('#message').textContent='Training · '+Math.round(fpsFrames/fpsTimer)+' FPS';fpsTimer=0;fpsFrames=0}camera.rotation.y=yaw;camera.rotation.x=pitch;
-const target=doorOpen?-1.58:0;doorAngle+=(target-doorAngle)*Math.min(1,dt*7);hinge.rotation.y=doorAngle;
-const f=Number(pressed.has('f')||pressed.has('arrowup'))-Number(pressed.has('b')||pressed.has('arrowdown'));const s=Number(pressed.has('r'))-Number(pressed.has('l'));const norm=Math.max(1,Math.hypot(f,s));const speed=3.1*dt/norm;
-const dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed;
-function height(z){if(z>=-5.25)return 1.65;if(z<=-10.25)return -1.1;return 1.65-(Math.abs(z+5.25)/5)*2.75}
-const nx=camera.position.x+dx,nz=camera.position.z+dz;
-if(!blocked(nx,camera.position.z,height(camera.position.z)))camera.position.x=nx;
-if(!blocked(camera.position.x,nz,height(nz)))camera.position.z=nz;
-camera.position.y=height(camera.position.z);
-const inside=camera.position.z<0&&Math.abs(camera.position.x)<5;const inBasement=inside&&camera.position.z< -10.25;haze.style.opacity=String(inBasement&&!thermal?Math.min(.68,smokeAmount*.72):0);
-if(inBasement&&strength>.02)status.textContent=selected+' · Kellerbrand / Sicht eingeschränkt';else if(inside&&camera.position.z< -5.25)status.textContent=selected+' · Kellertreppe';
-strength=Math.max(0,strength);smokeAmount+=(strength*.55-smokeAmount)*Math.min(1,dt*.3);
-fire.scale.setScalar(strength);fireLight.intensity=strength*(3+Math.sin(now*.014)*.7);
-for(let i=0;i<flames.length;i++)flames[i].scale.y=.85+Math.sin(now*.012+i*3)*.2;
-for(let i=0;i<smoke.length;i++){const age=(now*.000065+i/smoke.length)%1,a=i*2.3999,r=.2+age*2.1;smoke[i].position.set(-2.5+Math.cos(a)*r,Math.min(-.35,-2.15+age*2.7),-15.5+Math.sin(a)*r);smoke[i].scale.setScalar(.45+age*2);smoke[i].material.opacity=smokeAmount*.25*(1-age*.7);smoke[i].visible=smokeAmount>.01}
-if(waterOn&&selected==='Strahlrohr'){const dir=new THREE.Vector3();camera.getWorldDirection(dir);const source=camera.position.clone().addScaledVector(dir,.5);const fireTarget=new THREE.Vector3(-2.5,-1.85,-15.5);const toFire=fireTarget.clone().sub(camera.position),distance=toFire.length(),aimed=dir.dot(toFire.clone().normalize())>.965&&distance<9&&camera.position.y<0;
-// A water stream can only affect the fire when the nozzle has line of sight.
-const ray=new THREE.Raycaster(camera.position,dir,.1,Math.max(.1,distance-.6));const blockers=ray.intersectObjects(colliders.map(w=>w.mesh).filter(Boolean),false);
-const clear=blockers.length===0||blockers[0].distance>=distance-.7;
-if(aimed&&clear){waterHits+=dt;strength=Math.max(0,strength-dt*.19);if(strength===0)status.textContent='Brandherd gelöscht (Trainingsmodell)'}for(let i=0;i<water.length;i++){const d=.5+((now*.004+i*.14)%7),p=water[i];p.position.copy(source).addScaledVector(dir,d);p.position.y-=d*d*.014;p.position.x+=Math.sin(i*2.4)*d*.016;p.visible=true}}else for(const p of water)p.visible=false;
-renderer.render(scene,camera);requestAnimationFrame(frame)}
-requestAnimationFrame(frame);document.querySelector('#start').onclick=()=>document.querySelector('#intro').remove();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-</script></body></html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101920">
+<title>TactNex · Kellerbrand</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header><div class="brand">TACT<span>NEX</span><small> | KELLERBRAND</small></div><div id="location"></div></header>
+<aside><div id="objective">Brand im Keller lokalisieren</div><div id="feedback" role="status"></div><div id="gauges"></div></aside>
+<div id="reticle" aria-hidden="true">+</div>
+<div id="stick" aria-label="Bewegungsfläche"><div id="thumb"></div></div>
+<nav id="equipment" aria-label="Ausrüstung"></nav>
+<div id="actions"><button id="interact">Tür</button><button id="use">Gerät benutzen</button><button id="crouch" aria-pressed="false">Ducken</button></div>
+<button id="reset" aria-label="Einsatz neu starten">↻</button>
+<dialog id="briefing" open><article>
+<p class="brand">TACT<span>NEX</span></p>
+<h1>Kellerbrand</h1>
+<p>Erkunde das Wohnhaus, lösche den Brand im Technikraum und melde „Feuer aus“ über das Funkgerät am Vorplatz.</p>
+<p>Desktop: WASD, Maus ziehen, E für Türen, F für Geräte, C zum Ducken. Touch: linker Stick, rechts wischen, Geräte unten auswählen.</p>
+<small>Vereinfachtes Spielmodell für Feuer, Rauch und Messwerte.</small>
+<button id="start" disabled>Szene wird geladen …</button>
+<p id="error" role="alert"></p>
+</article></dialog>
+<script type="module" src="./game.mjs"></script>
+</body>
+</html>
