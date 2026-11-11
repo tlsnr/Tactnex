@@ -48,7 +48,7 @@ hand.position.set(.39,-.33,-.63);
 camera.add(hand);
 const grip=material(0x202b30);
 const alloy=material(0x9ca4a6,{metalness:.55});
-const devicesPanel=createDevicePanel();
+const devicesPanel=createDevicePanel(closeDevice);
 const alarm=createAlarm();
 const devices=['Hände','Strahlrohr','Wärmebild','Messgerät','Funkgerät','Lampe'];
 const models=devices.map(()=>new T.Group());
@@ -84,22 +84,35 @@ smokeScreen.style.cssText='position:fixed;inset:0;pointer-events:none;background
 document.body.append(smokeScreen);
 const thermalContext=devicesPanel.thermal.getContext('2d');
 const thermalRay=new T.Raycaster(), heatProjection=new T.Vector3(), thermalDirection=new T.Vector3();
+const thermalSample=document.createElement('canvas');
+thermalSample.width=48;
+thermalSample.height=30;
+const sampleContext=thermalSample.getContext('2d');
+const pixels=sampleContext.createImageData(thermalSample.width,thermalSample.height);
+const rayHits=[];
 function drawThermal(){
-  const ctx=thermalContext,w=256,h=192;
-  ctx.fillStyle='#1a1d1e';
-  ctx.fillRect(0,0,w,h);
-  // Each sample maps a visible surface to a relative temperature palette.
-  for(let j=0;j<14;j++){
-    for(let i=0;i<24;i++){
-      thermalRay.setFromCamera({x:(i+.5)/12-1,y:1-(j+.5)/7},camera);
+  const ctx=thermalContext,w=devicesPanel.thermal.width,h=devicesPanel.thermal.height;
+  const cols=thermalSample.width,rows=thermalSample.height;
+  for(let j=0;j<rows;j++){
+    for(let i=0;i<cols;i++){
+      thermalRay.setFromCamera({x:(i+.5)*2/cols-1,y:1-(j+.5)*2/rows},camera);
       thermalRay.far=15;
-      const point=thermalRay.intersectObjects(world.surfaces,false)[0]?.point;
-      const warmth=point?state.heat*Math.exp(-point.distanceTo(origin)*.92):0;
-      const gray=point?Math.round(38+119*Math.exp(-point.distanceTo(camera.position)*.18)):24;
-      ctx.fillStyle=warmth>.16?'hsl('+Math.round(61-68*warmth)+' 92% '+Math.round(37+30*warmth)+'%)':`rgb(${gray},${gray},${gray})`;
-      ctx.fillRect(i*w/24,j*h/14,Math.ceil(w/24),Math.ceil(h/14));
+      rayHits.length=0;
+      thermalRay.intersectObjects(world.surfaces,false,rayHits);
+      const hit=rayHits[0];
+      const warmth=hit?state.heat*Math.exp(-hit.point.distanceTo(origin)*.92):0;
+      const gray=hit?Math.round(37+145*Math.exp(-hit.distance*.19)):22;
+      const hot=clamp((warmth-.13)*2.2,0,1);
+      const offset=(j*cols+i)*4;
+      pixels.data[offset]=gray+(255-gray)*hot;
+      pixels.data[offset+1]=gray+(180-gray)*hot;
+      pixels.data[offset+2]=gray*(1-.84*hot);
+      pixels.data[offset+3]=255;
     }
   }
+  sampleContext.putImageData(pixels,0,0);
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(thermalSample,0,0,w,h);
   thermalDirection.copy(origin).sub(camera.position);
   thermalRay.set(camera.position,thermalDirection.clone().normalize());
   thermalRay.far=thermalDirection.length()-.11;
@@ -114,7 +127,7 @@ function drawThermal(){
   }
   ctx.strokeStyle='#fff9';
   ctx.beginPath();ctx.moveTo(w/2-5,h/2);ctx.lineTo(w/2+5,h/2);ctx.moveTo(w/2,h/2-5);ctx.lineTo(w/2,h/2+5);ctx.stroke();
-  ctx.fillStyle='#efe6d6';ctx.font='10px system-ui';ctx.fillText('SIM · RELATIV',8,15);
+
 }
 
 let running=false, selected=0, thermal=false, measuring=false, flashlight=false;
@@ -131,16 +144,26 @@ function toggleCrouch(){
   crouched=!crouched;
   ui('crouch').setAttribute('aria-pressed',String(crouched));
 }
+function closeDevice(){
+  devicesPanel.show(null);
+  thermal=false;
+  measuring=false;
+  alarm.update(false);
+}
+function openDevice(device){
+  if(devicesPanel.current()===device) return;
+  closeDevice();
+  devicesPanel.show(device);
+  thermal=device==='thermal';
+  measuring=device==='meter';
+  if(thermal) thermalAt=0;
+  if(measuring) alarm.unlock();
+}
 function equip(i){
   selected=i;
   state.flow=false;
-  thermal=i===2;
-  measuring=i===3;
-  alarm.update(false);
-  radioUntil=0;
-  devicesPanel.show(({2:"thermal",3:"meter",4:"radio"})[i]);
-  if(thermal){devicesPanel.setThermal(true);thermalAt=0;}
-  if(measuring) alarm.unlock();
+  const device=({2:'thermal',3:'meter',4:'radio'})[i];
+  if(device) openDevice(device);
   for(const [n,model] of models.entries()) model.visible=n===i;
   for(const [n,button] of [...ui('equipment').children].entries()) button.setAttribute('aria-pressed',String(n===i));
 }
@@ -196,12 +219,14 @@ function use(){
     if(state.tank<=0){say('Tank leer. Am Vorplatz nachfüllen.');return;}
     state.flow=!state.flow;
   } else if(selected===2){
-    thermal=!thermal;
-    devicesPanel.setThermal(thermal);
+    openDevice('thermal');
   } else if(selected===3){
-    measuring=!measuring;
+    const wasOpen=devicesPanel.current()==='meter';
+    openDevice('meter');
+    if(wasOpen) measuring=!measuring;
     if(!measuring){devicesPanel.updateMeter(null);alarm.update(false);}
   } else if(selected===4){
+    openDevice('radio');
     radioUntil=performance.now()+850;
     devicesPanel.setRadio(true);
     alarm.radio();
@@ -227,6 +252,8 @@ patternButton.onclick=()=>{state.pattern=1-state.pattern;updateHud(performance.n
 ui('actions').append(patternButton);
 function reset(){
   fire.reset();
+  closeDevice();
+  radioUntil=0;
   feet=yaw=pitch=0;
   eye=1.65;
   crouched=flashlight=false;
@@ -292,6 +319,7 @@ addEventListener('keydown',e=>{
   if(['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright','e','f','c','1','2','3','4','5','6'].includes(k)) e.preventDefault();
   keys.add(k);
   if(e.repeat) return;
+  if(k==='escape') closeDevice();
   if(k==='e') interact();
   if(k==='f') use();
   if(k==='c') toggleCrouch();
@@ -323,14 +351,14 @@ function updateHud(now){
   ui('location').textContent=label;
   const goal=state.reported?'Einsatz abgeschlossen':state.heat===0?'Feuer aus · am Vorplatz funken':'Brand im Technikraum löschen';
   ui('objective').textContent=goal;
-  ui('feedback').textContent=now<until?notification:state.jetHit?'Wasser trifft den Brandherd.':'';
+  ui('feedback').textContent=now<until?notification:state.jetHit?'Wasser trifft den Brandherd · Brand kühlt ab.':'';
   let gauges='';
   if(selected===1) gauges='Wasser '+Math.ceil(state.tank)+' / 420 L';
   if(measuring){
     const values=meterValues(index<0?0:state.smoke[index],index===0?state.heat:0);
     devicesPanel.updateMeter(values);
     alarm.update(values.alarm&&!document.hidden);
-    gauges=values.alarm?'Gaswarnung · Modellwerte':'Gasmesstechnik · Modellwerte';
+    if(values.alarm) gauges=[gauges,'Gasalarm'].filter(Boolean).join(' · ');
   }
   if(radioUntil && now>=radioUntil){devicesPanel.setRadio(false);radioUntil=0;}
   ui('gauges').textContent=gauges;
@@ -341,12 +369,12 @@ function updateHud(now){
   ui('use').textContent=[
     outside?'Tank füllen':'Interagieren',
     state.flow?'Wasser stoppen':'Wasser abgeben',
-    thermal?'Wärmebild aus':'Wärmebild an',
+    'Wärmebild anzeigen',
     measuring?'Messung aus':'Messen',
     'Funken',
     flashlight?'Lampe aus':'Lampe an'
   ][selected];
-  ui('use').disabled=selected===0&&!outside&&!door;
+  ui('use').disabled=(selected===0&&!outside&&!door)||(selected===2&&thermal);
   patternButton.hidden=selected!==1;
   patternButton.textContent=state.pattern?'Sprühstrahl':'Vollstrahl';
 }
@@ -374,11 +402,11 @@ function frame(now){
     const [,index]=room();
     const smoke=index<0?0:state.smoke[index]+(index===0?state.steam*.18:0);
     const haze=smoke*(crouched?.59:1);
-    smokeScreen.style.opacity=thermal?'0':String(Math.min(.68,haze*.75));
+    smokeScreen.style.opacity=String(Math.min(.68,haze*.75));
     scene.fog.density=.015+haze*.083;
     scene.fog.color.setHex(index<0?0xa5bac3:0x57554d);
     if(now>=hudAt){updateHud(now);hudAt=now+100;}
-    if(thermal&&now>=thermalAt){drawThermal();thermalAt=now+155;}
+    if(thermal&&now>=thermalAt){drawThermal();thermalAt=now+200;}
   }
   renderer.render(scene,camera);
   requestAnimationFrame(frame);

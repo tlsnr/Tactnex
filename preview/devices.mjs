@@ -4,24 +4,46 @@ const photos = {
   radio: {file:'radio.jpg', label:'Sepura-Funkmikrofon'}
 };
 
-export function createDevicePanel(){
-  const panel=document.createElement('figure');
+export function createDevicePanel(onClose){
+  const panel=document.createElement('section');
   panel.id='device-photo';
   panel.hidden=true;
+  const bar=document.createElement('div');
+  bar.className='device-bar';
+  const title=document.createElement('strong');
+  title.id='device-title';
+  panel.setAttribute('aria-labelledby',title.id);
+  const close=document.createElement('button');
+  close.type='button';
+  close.textContent='×';
+  close.setAttribute('aria-label','Gerätefenster schließen');
+  close.onclick=onClose;
+  bar.append(title,close);
+  const body=document.createElement('div');
+  body.className='device-body';
   const photo=document.createElement('img');
   photo.draggable=false;
   const screen=document.createElement('div');
   screen.className='device-screen';
   const thermal=document.createElement('canvas');
-  thermal.width=256;
-  thermal.height=192;
-  thermal.hidden=true;
+  thermal.width=480;
+  thermal.height=300;
   thermal.setAttribute('aria-label','Wärmebild der Szene');
-  const readings=document.createElement('div');
+  const readings=document.createElement('dl');
   readings.className='meter-readings';
-  screen.append(thermal,readings);
-  const label=document.createElement('figcaption');
-  panel.append(photo,screen,label);
+  const fields=['Sauerstoff · O₂','Kohlenmonoxid · CO','Rauchindex'].map(name=>{
+    const row=document.createElement('div'), term=document.createElement('dt'), value=document.createElement('dd');
+    term.textContent=name;
+    row.append(term,value);
+    readings.append(row);
+    return value;
+  });
+  const status=document.createElement('div');
+  status.className='device-status';
+  status.setAttribute('role','status');
+  screen.append(thermal,readings,status);
+  body.append(photo,screen);
+  panel.append(bar,body);
   document.body.append(panel);
 
   let current=null;
@@ -30,40 +52,33 @@ export function createDevicePanel(){
     image.src=new URL('./devices/'+file,import.meta.url).href;
     return [key,image];
   }));
+  function setStatus(message){
+    if(status.textContent!==message) status.textContent=message;
+  }
   function show(device){
     if(device===current) return;
     current=device;
     panel.hidden=!device;
     if(!device) return;
     panel.dataset.device=device;
+    title.textContent=photos[device].label;
     photo.src=images[device].src;
     photo.alt=photos[device].label;
-    screen.hidden=device==='radio';
     readings.hidden=device!=='meter';
-    thermal.hidden=true;
+    thermal.hidden=device!=='thermal';
     if(device==='meter') updateMeter(null);
-    label.textContent=device==='radio'?'Sprechmikrofon · PTT':device==='thermal'?'K85 · Standby':'Messgerät · Standby';
-  }
-  function setThermal(active){
-    thermal.hidden=!active;
-    label.textContent=active?'K85 · Wärmebild':'K85 · Standby';
+    else setStatus(device==='thermal'?'Relatives Wärmebild · Simulation':'PTT bereit');
   }
   function updateMeter(values){
-    if(!values){
-      readings.textContent='BEREIT';
-      readings.dataset.alarm='false';
-      label.textContent='Messgerät · Standby';
-      return;
-    }
-    const {oxygen,co,smoke,alarm}=values;
-    readings.textContent='SIMULATION\nO₂  '+oxygen.toFixed(1).replace('.',',')+' %\nCO  '+co+' ppm\nRAUCH  '+smoke+' %\n'+(alarm?'ALARM':'MESSUNG');
-    readings.dataset.alarm=String(alarm);
-    label.textContent=alarm?'Messgerät · Gasalarm':'Messgerät · Modellwerte';
+    const readingsText=values?[values.oxygen.toFixed(1).replace('.',',')+' %',values.co+' ppm',values.smoke+' %']:['–','–','–'];
+    for(const [i,field] of fields.entries()) if(field.textContent!==readingsText[i]) field.textContent=readingsText[i];
+    readings.dataset.alarm=String(Boolean(values?.alarm));
+    setStatus(values?.alarm?'Gasalarm · Simulation':values?'Messung läuft · Simulation':'Messung pausiert');
   }
   function setRadio(active){
-    if(current==='radio') label.textContent=active?'Funk · Sendet':'Sprechmikrofon · PTT';
+    if(current==='radio') setStatus(active?'Funk · Sendet':'PTT bereit');
   }
-  return {show,thermal,setThermal,updateMeter,setRadio};
+  return {show,thermal,updateMeter,setRadio,current:()=>current};
 }
 
 // The alarm uses invented scenario values and has no real-device calibration.
