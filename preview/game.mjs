@@ -54,10 +54,10 @@ const devices=['Hände','Strahlrohr','Wärmebild','Messgerät','Funkgerät','Lam
 const models=devices.map(()=>new T.Group());
 for(const m of models) hand.add(m);
 const right=createGlove(models[0],1,false);
-right.glove.position.set(.02,-.16,-.11);
+right.glove.position.set(.02,-.10,-.27);
 right.glove.rotation.set(-.28,-.26,-.17);
 const left=createGlove(models[0],-1,false);
-left.glove.position.set(-.77,-.17,-.16);
+left.glove.position.set(-.77,-.11,-.28);
 left.glove.rotation.set(-.29,.27,.18);
 const nozzleGrip=createGlove(models[1],1,true);
 nozzleGrip.glove.position.set(.053,-.10,.048);
@@ -74,6 +74,7 @@ for(const [r1,r2,length,z,mat] of [[.052,.06,.37,-.13,alloy],[.081,.07,.105,-.32
 box(1,.16,.028,.15,0,.077,-.04,material(0xd84f2b));
 const lampBody=world.mesh(new T.CylinderGeometry(.06,.045,.24,16),alloy,0,0,0,models[5]);
 lampBody.rotation.x=Math.PI/2;
+hand.traverse(object=>{if(object.isMesh) object.renderOrder=10;});
 const lamp=new T.SpotLight(0xffeed8,0,15,.37,.62,1.35);
 lamp.position.set(0,.015,-.1);
 lamp.target.position.set(0,0,-6);

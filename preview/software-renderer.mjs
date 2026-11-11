@@ -76,7 +76,7 @@ export function createSoftwareRenderer() {
       const shade=mat.isMeshBasicMaterial?1:.68+Math.max(0,normal.dot(sun))*.46;
       const fog=1-Math.exp(-Math.pow(scene.fog.density*Math.max(0,depth),2));
       const fill=color.copy(base).multiplyScalar(shade).lerp(tint,fog).getStyle();
-      queue.push({depth,points,fill,opacity:mat.opacity});
+      queue.push({depth,points,fill,opacity:mat.opacity,layer:object.renderOrder});
     }
   }
   function sprite(object){
@@ -122,7 +122,7 @@ export function createSoftwareRenderer() {
         else if(object.isSprite) sprite(object);
         else if(object.isPoints) particles(object);
       });
-      queue.sort((a,b)=>b.depth-a.depth);
+      queue.sort((a,b)=>(a.layer??0)-(b.layer??0)||b.depth-a.depth);
       for(const item of queue){
         ctx.globalAlpha=item.opacity;
         if(item.points){
