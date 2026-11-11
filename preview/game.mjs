@@ -1,3 +1,4 @@
+import {createIncident} from './incident.mjs';
 import * as T from './vendor/three.module.min.mjs';
 import {createWorld, floorAt, canStand, leafDistance, material, clamp} from './world.mjs';
 import {createFire, origin} from './fire.mjs';
@@ -42,6 +43,11 @@ scene.add(sun);
 const world=createWorld(scene);
 const fire=createFire(scene,world.surfaces);
 const {state}=fire;
+const incident=createIncident();
+const squad=incident.state;
+const airLine=document.createElement('div');
+airLine.id='air-line';
+ui('gauges').after(airLine);
 scene.add(camera);
 const hand=new T.Group();
 hand.position.set(.39,-.33,-.63);
@@ -216,6 +222,7 @@ function use(){
   if(!running) return;
   alarm.unlock();
   if(selected===1){
+    if(squad.phase!=='attack'||squad.reserveReached){say('Strahlrohr im Angriff nach der Zielmeldung benutzen.');return;}
     if(state.tank<=0){say('Tank leer. Am Vorplatz nachfüllen.');return;}
     state.flow=!state.flow;
   } else if(selected===2){
@@ -230,17 +237,14 @@ function use(){
     radioUntil=performance.now()+850;
     devicesPanel.setRadio(true);
     alarm.radio();
-    if(state.heat===0 && camera.position.z>1.3 && Math.abs(camera.position.x)<7){
-      state.reported=true;
-      say('Leitstelle bestätigt. Einsatz abgeschlossen.');
-    } else if(state.heat===0) say('Übungsleitung: Rückmeldung am Vorplatz abgeben.');
-    else say('Leitstelle: Kellerbrand bestätigt. Rückmeldung nach dem Löschen.');
+    say(incident.radio({outside:atAssembly(),atGoal:atTarget(),extinguished:state.heat===0}));
+    state.reported=squad.phase==='complete'&&!squad.aborted;
   } else if(selected===5){
     flashlight=!flashlight;
     lamp.intensity=flashlight?31:0;
   } else if(camera.position.z>1.3 && Math.abs(camera.position.x)<7){
-    state.tank=420;
-    say('Wassertank am Vorplatz aufgefüllt.');
+    if(squad.phase==='check') say(incident.check());
+    else {state.tank=420;say('Wassertank am Vorplatz aufgefüllt.');}
   } else interact();
 }
 ui('use').onclick=use;
@@ -252,6 +256,7 @@ patternButton.onclick=()=>{state.pattern=1-state.pattern;updateHud(performance.n
 ui('actions').append(patternButton);
 function reset(){
   fire.reset();
+  incident.reset();
   closeDevice();
   radioUntil=0;
   feet=yaw=pitch=0;
@@ -340,16 +345,37 @@ function movePlayer(dt){
   for(const [x,z] of [[p.x+dx,p.z],[null,p.z+dz]]){
     const nextX=x??p.x;
     const y=floorAt(nextX,z,feet);
+    const entering=p.z>=0&&z<0&&Math.abs(nextX)<5.5;
+    if(entering&&['check','register','failed','complete'].includes(squad.phase)) continue;
     if(canStand(world,nextX,z,y,targetEye)){p.x=nextX;p.z=z;feet=y;}
   }
   eye+=(targetEye-eye)*Math.min(1,dt*12);
   p.y=feet+eye;
   camera.rotation.set(pitch,yaw,0,'YXZ');
 }
+function atAssembly(){
+  return camera.position.z>1.3&&Math.abs(camera.position.x)<7;
+}
+function atTarget(){
+  const {x,z}=camera.position;
+  return feet<-2.6 && z<-8.85 && z>-11.8 && x<1.04;
+}
 function updateHud(now){
   const [label,index]=room();
   ui('location').textContent=label;
-  const goal=state.reported?'Einsatz abgeschlossen':state.heat===0?'Feuer aus · am Vorplatz funken':'Brand im Technikraum löschen';
+  const goals={
+    check:'Am Vorplatz · Hände → Truppkontrolle',
+    register:'Atemschutzüberwachung per Funk anmelden',
+    advance:'Zum Technikraum vorgehen und Einsatzziel melden',
+    attack:state.heat===0?'Feuer aus · Rückweg per Funk melden':'Brandbekämpfung · Rückwegreserve beachten',
+    return:'Zum Vorplatz zurück und per Funk abmelden',
+    complete:squad.aborted?'Trupp abgemeldet · Einsatz abgebrochen':'Trupp abgemeldet · Einsatz abgeschlossen',
+    failed:'Übung abgebrochen · Atemluft erschöpft'
+  };
+  const goal=squad.reserveReached&&['advance','attack'].includes(squad.phase)?'Rückwegreserve erreicht · Rückweg melden':goals[squad.phase];
+  airLine.textContent=squad.phase==='check'?'Angriffstrupp · 2 Personen':
+    'Truppführer '+Math.ceil(squad.air[0])+' bar · Truppmann '+Math.ceil(squad.air[1])+' bar'+
+    (squad.inbound>0?' · Rückwegreserve '+Math.ceil(2*squad.inbound)+' bar':'');
   ui('objective').textContent=goal;
   ui('feedback').textContent=now<until?notification:state.jetHit?'Wasser trifft den Brandherd · Brand kühlt ab.':'';
   let gauges='';
@@ -367,7 +393,7 @@ function updateHud(now){
   ui('interact').disabled=!door;
   const outside=camera.position.z>1.3&&Math.abs(camera.position.x)<7;
   ui('use').textContent=[
-    outside?'Tank füllen':'Interagieren',
+    outside?(squad.phase==='check'?'Truppkontrolle':'Tank füllen'):'Interagieren',
     state.flow?'Wasser stoppen':'Wasser abgeben',
     'Wärmebild anzeigen',
     measuring?'Messung aus':'Messen',
@@ -383,7 +409,12 @@ function frame(now){
   const dt=Math.min(.045,(now-(previous||now))/1000);
   previous=now;
   if(running){
+    const previousX=camera.position.x, previousZ=camera.position.z;
     movePlayer(dt);
+    const message=incident.step(dt,{outside:atAssembly(),
+      moving:Math.hypot(camera.position.x-previousX,camera.position.z-previousZ)>.001,working:state.flow});
+    if(message) say(message);
+    if(squad.reserveReached||squad.phase==='failed') state.flow=false;
     const sway=Math.sin(now*.004)*.016;
     hand.position.y=-.33+sway;
     right.pose(Math.max(0,sway)*3);

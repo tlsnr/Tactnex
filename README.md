@@ -30,3 +30,7 @@ Das Strahlrohr bietet Voll- und Sprühstrahl sowie einen begrenzten Tank. Zum Na
 ## Modellgrenzen
 
 Das Szenario enthält ein Erdgeschoss und einen Keller, ein Fahrzeug als Kulisse sowie einen festen Brandherd. Feuer, Rauch, Dampf, Wasserwirkung und Messwerte sind vereinfachte Spielmodelle. Es gibt keine Brandweiterleitung zwischen Gegenständen, keine Schlauchverlegung, keine Atemschutzsimulation und keinen Mehrspielerbetrieb.
+
+## Atemschutzübung
+
+Die Vorschau bildet ausgewählte Schritte aus [FwDV 7, Abschnitte 7.1, 7.2 und 7.4](https://www.lfs-bw.de/fileadmin/LFS-BW/themen/gesetze_vorschriften/fwdv/dokumente/FwDV_7.pdf) ab. Über „Hände“ beginnt die simulierte Truppkontrolle, danach folgen die Funkmeldungen an die Atemschutzüberwachung. Truppmann und Sicherheitstrupp sind in dieser Fassung als Spielzustand abgebildet. Der niedrigere der beiden Behälterdrücke ist für die simulierte Rückwegreserve maßgeblich. Nach Erreichen der Reserve endet die Brandbekämpfung, und der Rückweg wird gemeldet. Die Druckverläufe und Übungszeiten sind Spielparameter. Schlauchleitung, Rückwegsicherung und Atemschutznotfälle werden noch nicht simuliert.

@@ -49,3 +49,5 @@ article{max-width:490px;background:#172833;border:1px solid #a3b4bf55;border-rad
   .device-body{padding:7px;gap:8px}
   .device-screen canvas{max-height:25dvh}
 }
+
+#air-line{margin-top:4px;color:#ffd9aa;font:650 12px system-ui}
