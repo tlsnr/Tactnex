@@ -54,7 +54,7 @@ box(9,.16,8,0,-2.78,-13,0x80766c);
 box(.2,2.7,8,-4.5,-1.35,-13,0xc9c2b7);box(.2,2.7,8,4.5,-1.35,-13,0xc9c2b7);
 box(9,2.7,.2,0,-1.35,-17,0xc9c2b7);
 // Staircase goes from z=-5.4 at ground level to z=-10.4 at basement level.
-const stairStart=-5.4,stairEnd=-10.4,stairCount=14;
+const stairStart=-5.4,stairEnd=-10.4,stairCount=14;box(.15,2.8,5,-1.1,-.8,-7.9,0x9b9289);box(.15,2.8,5,1.1,-.8,-7.9,0x9b9289);
 for(let i=0;i<stairCount;i++){const z=stairStart-(i+.5)*(5/stairCount);const y=-(i+1)*2.7/stairCount;box(1.9,.12,5/stairCount,0,y-.07,z,0x77716b)}
 // Basement furnishing and props.
 function furnishing(w,h,d,x,y,z,color){return box(w,h,d,x,y,z,color)}
@@ -85,7 +85,7 @@ car.position.set(8,0,7);carPart(1.9,.55,4.1,0,.68,0,0x274b6d);carPart(1.68,.54,2
 const fireGroup=new THREE.Group();fireGroup.position.set(-2,-2.6,-14.4);scene.add(fireGroup);
 for(let i=0;i<7;i++){const flame=new THREE.Mesh(new THREE.ConeGeometry(.25+i*.035,.75+i*.1,6),new THREE.MeshBasicMaterial({color:i%2?0xffaa16:0xff4d0a,transparent:true,opacity:.76,depthWrite:false}));flame.position.set((i%3-1)*.27,.38+(i%2)*.15,Math.floor(i/3)*.24);fireGroup.add(flame)}
 const fireLight=new THREE.PointLight(0xff5b16,4,9);fireLight.position.set(-2,-1.8,-14.4);scene.add(fireLight);
-const smoke=[];for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.35,7,5),new THREE.MeshBasicMaterial({color:0x4d5154,transparent:true,opacity:.13,depthWrite:false}));scene.add(m);smoke.push(m)}
+const smoke=[];for(let i=0;i<65;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.35,7,5),new THREE.MeshBasicMaterial({color:0x4d5154,transparent:true,opacity:.13,depthWrite:false}));scene.add(m);smoke.push(m)}
 // Visible first-person equipment selection, with basic 3D handheld silhouettes.
 const hand=new THREE.Group();camera.add(hand);scene.add(camera);hand.position.set(.52,-.46,-.85);
 const glove=new THREE.Mesh(new THREE.BoxGeometry(.18,.19,.36),new THREE.MeshStandardMaterial({color:0x1e2427}));glove.position.set(0,-.09,.12);hand.add(glove);
@@ -97,7 +97,7 @@ else if(name==='Strahlrohr'){const m=add(new THREE.CylinderGeometry(.065,.11,.65
 else if(name==='Feuerwehraxt'){const m=add(new THREE.CylinderGeometry(.025,.035,.85,8),0,.14,-.2,0x6c482b);m.rotation.z=-.2;add(new THREE.BoxGeometry(.35,.2,.065),-.04,.55,-.2,0x9ba5a9)}
 else if(name==='Halligan'){const m=add(new THREE.CylinderGeometry(.025,.025,.85,8),0,.15,-.2,0x666e76);m.rotation.z=.2;add(new THREE.BoxGeometry(.28,.07,.07),-.1,.55,-.2,0x8b9299)}
 else if(name==='Funkgerät'){add(new THREE.BoxGeometry(.19,.3,.09),0,.1,-.2,0x22272b);add(new THREE.CylinderGeometry(.012,.012,.2,8),.06,.35,-.2,0x171a1b)}}
-let selectedEquipment='Hände',fireStrength=1,waterOn=false,waterDroplets=[],thermalMode=false;
+let selectedEquipment='Hände',fireStrength=1,waterOn=false,waterDroplets=[],thermalMode=false,smokeDensity=0,waterHit=false;
 const equipmentDisplay=document.createElement('div');equipmentDisplay.style.cssText='position:absolute;right:14px;top:68px;z-index:21;background:#10222bdc;border:1px solid #63838e;border-radius:9px;padding:9px 12px;font-size:13px;display:none;pointer-events:none';document.body.append(equipmentDisplay);
 const useButton=document.createElement('button');useButton.textContent='GERÄT BENUTZEN';useButton.style.cssText='position:absolute;right:22px;bottom:188px;z-index:25;background:#f3bb4d;color:#1c1c1c;border:0;border-radius:12px;padding:14px;font-weight:800;display:none';document.body.append(useButton);
 const thermalOverlay=document.createElement('div');thermalOverlay.style.cssText='position:absolute;left:22%;top:17%;width:56%;height:56%;border:8px solid #1c2528;border-radius:22px;z-index:19;pointer-events:none;display:none;box-sizing:border-box;background:radial-gradient(circle at 43% 58%,#fff8a5 0%,#ff672b 12%,#6e348d 35%,#192e62 70%);opacity:.78';document.body.append(thermalOverlay);
@@ -142,7 +142,18 @@ let cx=px,cz=pz;const steps=Math.max(1,Math.ceil(Math.hypot(nx-px,nz-pz)/.09));
 for(let i=1;i<=steps;i++){const tx=px+(nx-px)*i/steps,tz=pz+(nz-pz)*i/steps;if(passable(tx,tz)){cx=tx;cz=tz}else break}
 camera.position.x=cx;camera.position.z=cz;
 const inHouse=cx>-4.7&&cx<4.7&&cz<-.3&&cz>-16.7;
+if(cz< -5.4&&cz> -10.4&&Math.abs(cx)>1.04){camera.position.x=px;camera.position.z=pz;cx=px;cz=pz}
+
 const stairProgress=Math.max(0,Math.min(1,(-cz-5.4)/5));camera.position.y=1.65-2.7*stairProgress;
-const near=Math.abs(camera.position.x)<2&&Math.abs(camera.position.z)<2.6;action.style.display=near?'block':'none';action.textContent=open?'Tür schließen':'Tür öffnen';if(inHouse&&camera.position.z< -10.4)status.textContent='Im Kellergeschoss (Testbereich).';else if(inHouse&&camera.position.z< -5.4)status.textContent='Du gehst die Kellertreppe hinunter.';else if(inHouse)status.textContent='Im Hausflur. Gehe zur Kellertreppe.';for(let i=0;i<smoke.length;i++){const a=t*.00025+i*2.4;smoke[i].position.set(-2+Math.sin(a+i)*.5,-2.15+((t*.0003+i*.17)%3),-14.4+Math.cos(a+i)*.4);smoke[i].scale.setScalar((.7+((t*.0003+i*.17)%3)*.55)*Math.max(.1,fireStrength));smoke[i].visible=fireStrength>.05}fireLight.intensity=fireStrength*(3.2+Math.sin(t*.013)*.9);fireGroup.scale.setScalar(Math.max(.05,fireStrength));if(waterOn&&selectedEquipment==='Strahlrohr'){const forward=new THREE.Vector3();camera.getWorldDirection(forward);const origin=camera.position.clone().addScaledVector(forward,.6);const target=new THREE.Vector3(-2,-1.8,-14.4);if(forward.dot(target.clone().sub(camera.position).normalize())>.89&&camera.position.distanceTo(target)<10){fireStrength=Math.max(0,fireStrength-dt*.15);if(fireStrength<.06)status.textContent='Brandherd im Übungsszenario gelöscht.'}for(let i=0;i<waterDroplets.length;i++){const p=waterDroplets[i];const dist=.6+((t*.005+i*.17)%7);p.position.copy(origin).addScaledVector(forward,dist);p.position.y-=dist*dist*.012;p.position.x+=Math.sin(i*15.4)*dist*.018;p.visible=true}}else for(const p of waterDroplets)p.visible=false;for(let i=0;i<fireGroup.children.length;i++)fireGroup.children[i].scale.y=.8+Math.sin(t*.009+i)*.2;renderer.render(scene,camera);requestAnimationFrame(tick)}requestAnimationFrame(tick);
+const near=Math.abs(camera.position.x)<2&&Math.abs(camera.position.z)<2.6;action.style.display=near?'block':'none';action.textContent=open?'Tür schließen':'Tür öffnen';if(inHouse&&camera.position.z< -10.4)status.textContent='Im Kellergeschoss (Testbereich).';else if(inHouse&&camera.position.z< -5.4)status.textContent='Du gehst die Kellertreppe hinunter.';else if(inHouse)status.textContent='Im Hausflur. Gehe zur Kellertreppe.';// Smoke particles rise from the fire, drift toward the ceiling and fade as the fire is extinguished.
+smokeDensity+=(Math.max(0,fireStrength)*.45-smokeDensity)*Math.min(1,dt*.35);
+for(let i=0;i<smoke.length;i++){const age=((t*.00009+i/smoke.length)%1),a=i*2.39996;
+const radius=.15+age*2.6,sy=-2.15+age*2.9;
+smoke[i].position.set(-2+Math.cos(a)*radius,Math.min(-.25,sy),-14.4+Math.sin(a)*radius);
+smoke[i].scale.setScalar(.45+age*2.1);
+smoke[i].material.opacity=Math.min(.26,smokeDensity*.32)*(1-age*.65);
+smoke[i].visible=smokeDensity>.015;
+}
+fireLight.intensity=fireStrength*(3.2+Math.sin(t*.013)*.9);fireGroup.scale.setScalar(Math.max(0,fireStrength));if(waterOn&&selectedEquipment==='Strahlrohr'){const forward=new THREE.Vector3();camera.getWorldDirection(forward);const origin=camera.position.clone().addScaledVector(forward,.6);const target=new THREE.Vector3(-2,-1.8,-14.4);waterHit=forward.dot(target.clone().sub(camera.position).normalize())>.94&&camera.position.distanceTo(target)<9&&camera.position.y<1;if(waterHit){fireStrength=Math.max(0,fireStrength-dt*.20);if(fireStrength<.06)status.textContent='Brandherd im Übungsszenario gelöscht.'}for(let i=0;i<waterDroplets.length;i++){const p=waterDroplets[i];const dist=.6+((t*.005+i*.17)%7);p.position.copy(origin).addScaledVector(forward,dist);p.position.y-=dist*dist*.012;p.position.x+=Math.sin(i*15.4)*dist*.018;p.visible=true}}else for(const p of waterDroplets)p.visible=false;for(let i=0;i<fireGroup.children.length;i++)fireGroup.children[i].scale.y=.8+Math.sin(t*.009+i)*.2;renderer.render(scene,camera);requestAnimationFrame(tick)}requestAnimationFrame(tick);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script></body></html>
