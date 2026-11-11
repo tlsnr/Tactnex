@@ -24,13 +24,18 @@ for(const [x,z,s] of [[-12,5,1.1],[13,7,1],[-14,-7,.8],[15,-11,1.2],[-18,13,1.1]
 // House front wall with a real doorway gap: doorway x=-.8..+.8, house spans x=-5..5.
 for(const [w,h,d,x,y,z] of [[4.2,3.4,.25,-2.9,1.7,0],[4.2,3.4,.25,2.9,1.7,0],[1.6,.85,.25,0,2.975,0]])mesh(new THREE.BoxGeometry(w,h,d),plasterMat,x,y,z);
 for(const [w,h,d,x,y,z] of [[.25,3.4,9,-5,1.7,-4.5],[.25,3.4,9,5,1.7,-4.5],[10,3.4,.25,0,1.7,-9]])mesh(new THREE.BoxGeometry(w,h,d),plasterMat,x,y,z);box(4,.15,9,-3,.01,-4.5,0xb4a797);box(4,.15,9,3,.01,-4.5,0xb4a797);box(2,.15,5.3,0,.01,-2.65,0xb4a797);
-// Pitched tiled roof with gables, ridge, chimney and gutters.
-function roofSlope(x,angle){const m=mesh(new THREE.BoxGeometry(5.95,.22,10.1),roofMat,x,4.45,-4.5);m.rotation.z=angle;return m}
-roofSlope(-2.45,-.48);roofSlope(2.45,.48);
-for(const z of [-9.45,.45]){const g=new THREE.Mesh(new THREE.ConeGeometry(5.5,2.55,3),new THREE.MeshStandardMaterial({color:0xe4d7c4,roughness:1}));g.rotation.y=Math.PI/2;g.position.set(0,4.63,z);scene.add(g)}
-box(.7,1.4,.7,2.5,5.55,-6.8,0x9b5b4b);box(.9,.13,.9,2.5,6.3,-6.8,0x555052);
-for(const x of [-4.9,4.9])box(.13,.13,10.2,x,3.48,-4.5,0x626a6e);
-for(let j=0;j<9;j++)for(const x of [-2.4,2.4]){const tile=box(5.6,.025,.035,x,4.49,-9+j*1.05,0x603b32);tile.rotation.z=x<0?-.48:.48}
+// Roof rebuilt as two correctly connected sloped surfaces; ridge and eaves share vertices.
+const roofLeft=-5.45,roofRight=5.45,roofRidge=5.55,roofEave=3.5,roofFront=.55,roofBack=-9.55;
+function roofPanel(x0,x1){const y0=x0===0?roofRidge:roofEave,y1=x1===0?roofRidge:roofEave;
+const vertices=new Float32Array([x0,y0,roofFront,x1,y1,roofFront,x1,y1,roofBack,x0,y0,roofFront,x1,y1,roofBack,x0,y0,roofBack]);
+const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));geometry.computeVertexNormals();
+const m=mesh(geometry,roofMat,0,0,0);m.material.side=THREE.DoubleSide;return m}
+roofPanel(roofLeft,0);roofPanel(0,roofRight);
+function gable(z){const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute([-5,3.4,z,5,3.4,z,0,roofRidge,z],3));geometry.computeVertexNormals();const m=mesh(geometry,plasterMat,0,0,0);m.material.side=THREE.DoubleSide}
+gable(-9);gable(0);
+box(.14,.13,10.25,0,roofRidge,-4.5,0x51413b);
+for(const x of [-5.25,5.25])box(.12,.12,10.2,x,roofEave,-4.5,0x777b7d);
+box(.7,1.4,.7,2.5,5.5,-6.8,0x9b5b4b);box(.9,.13,.9,2.5,6.26,-6.8,0x555052);
 // Window frames, panes, shutters and sills.
 for(const x of [-3.2,3.2]){box(1.95,.12,.34,x,.98,.21,0xe2e2df);for(const dx of [-1.04,1.04])box(.1,1.75,.15,x+dx,1.8,.2,0xf0f0ec);box(1.98,.1,.15,x,2.65,.2,0xf0f0ec)}
 // Porch light and entry threshold.
