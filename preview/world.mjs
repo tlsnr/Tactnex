@@ -35,7 +35,9 @@ function texture(base, kind) {
   map.wrapS = map.wrapT = T.RepeatWrapping;
   map.repeat.set(kind === 'grass' ? 55 : 4, kind === 'grass' ? 55 : 4);
   map.anisotropy = 4;
-  return material(0xffffff,{map});
+  const surface=material(0xffffff,{map});
+  surface.userData.canvasColor=new T.Color(base);
+  return surface;
 }
 
 export function createWorld(scene) {

@@ -15,3 +15,5 @@ nav{bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-
 dialog{z-index:5;inset:0;margin:0;border:0;width:100%;max-width:none;height:100%;max-height:none;background:#0c161de3;color:inherit;padding:18px;overflow:auto}dialog[open]{display:grid;place-items:center}
 article{max-width:490px;background:#172833;border:1px solid #a3b4bf55;border-radius:18px;padding:clamp(17px,4vw,30px)}h1{font-size:clamp(32px,7vw,52px);margin:0}article p{line-height:1.45}article small{color:#b9cbce}#start{display:block;margin-top:14px;width:100%}#error:empty{display:none}
 @media(max-width:550px){nav{width:calc(100% - 24px);display:grid;grid-template-columns:repeat(3,1fr)}nav button{padding:5px;min-width:0}#stick,#actions{bottom:max(118px,calc(env(safe-area-inset-bottom) + 108px))}header small{display:none}}
+
+[hidden]{display:none!important}

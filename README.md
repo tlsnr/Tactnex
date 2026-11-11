@@ -10,7 +10,7 @@ Im Repository auf `neubau-v1` wechseln und einen statischen Server starten:
 python3 -m http.server 8000
 ```
 
-[localhost:8000/preview/](http://localhost:8000/preview/) öffnen. Auf dem iPad im gleichen WLAN statt `localhost` die LAN-Adresse des Rechners verwenden. Die Vorschau benötigt WebGL 2. Three.js r170 (MIT) ist unter `preview/vendor/` enthalten. Es sind kein Build, kein externer Laufzeitdienst und kein Konto nötig.
+[localhost:8000/preview/](http://localhost:8000/preview/) öffnen. Auf dem iPad im gleichen WLAN statt `localhost` die LAN-Adresse des Rechners verwenden. Für die volle Grafikqualität verwendet die Vorschau WebGL 2. Ohne WebGL startet eine vereinfachte Canvas-3D-Darstellung. Three.js r170 (MIT) ist unter `preview/vendor/` enthalten. Es sind kein Build, kein externer Laufzeitdienst und kein Konto nötig.
 
 ## Spielen
 

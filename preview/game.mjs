@@ -1,6 +1,7 @@
 import * as T from './vendor/three.module.min.mjs';
 import {createWorld, floorAt, canStand, leafDistance, material, clamp} from './world.mjs';
 import {createFire, origin} from './fire.mjs';
+import {createSoftwareRenderer} from './software-renderer.mjs';
 
 const ui=id=>document.getElementById(id);
 const scene=new T.Scene();
@@ -12,8 +13,13 @@ let renderer;
 try {
   renderer=new T.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 } catch (error) {
-  ui('error').textContent='WebGL konnte nicht gestartet werden. Prüfe die Grafikeinstellungen des Browsers.';
-  throw error;
+  try {
+    renderer=createSoftwareRenderer();
+    ui('location').title='Vereinfachte 3D-Darstellung ohne WebGL';
+  } catch {
+    ui('error').textContent='Die 3D-Darstellung konnte in diesem Browser nicht gestartet werden.';
+    throw error;
+  }
 }
 renderer.toneMapping=T.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.17;
